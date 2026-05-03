@@ -118,22 +118,31 @@
     }
 
     function viewClients() {
-      fetch(API + "/clients")
-      .then(res => res.json())
-      .then(data => {
-        let html = "<h2>Clients</h2>";
-        data.forEach(c => {
-          html += `<div class="card">
-            <b>${c.name}</b><br>
-            Email: ${c.email || "N/A"}<br>
-            Role: ${c.role}<br>
-            Status: ${c.status || "New"}<br>
-            Follow-up: ${c.followUpStage || 0}
-          </div>`;
-        });
-        openPopup("Clients", html);
-      });
-    }
+  alert("View Clients clicked");
+
+  fetch(API + "/clients")
+  .then(res => res.json())
+  .then(data => {
+    alert("Clients found: " + data.length);
+
+    let html = "<h2>Clients</h2>";
+
+    data.forEach(c => {
+      html += `
+        <div class="card">
+          <b>${c.name}</b><br>
+          Email: ${c.email || "N/A"}<br>
+          Role: ${c.role}<br>
+          Status: ${c.status || "New"}<br>
+          Follow-up: ${c.followUpStage || 0}
+        </div>
+      `;
+    });
+
+    openPopup("Clients", html);
+  })
+  .catch(err => alert("Error: " + err));
+}
 
     function viewEmails() {
       fetch(API + "/emails")
