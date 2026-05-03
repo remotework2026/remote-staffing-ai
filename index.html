@@ -28,6 +28,7 @@
   <hr>
 
   <h2>CRM</h2>
+  <button onclick="autoClients()">Auto Find Clients</button>
   <button onclick="viewApplicants()">View Applicants</button>
   <button onclick="viewClients()">View Clients</button>
   <button onclick="getMatch()">Find Matches</button>
@@ -209,6 +210,12 @@
       })
       .then(res => res.json())
       .then(data => alert(JSON.stringify(data)));
+
+   function autoClients() {
+   fetch(API + "/auto-clients")
+  .then(res => res.json())
+  .then(data => alert(data.message + " (" + data.count + ")"));
+
     }
   </script>
 </body>

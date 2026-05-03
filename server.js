@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ===== FILE PATHS =====
 const DATA_DIR = path.join(__dirname, 'data');
 const APPLICANTS_FILE = path.join(DATA_DIR, 'applicants.json');
 const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json');
@@ -20,6 +21,7 @@ const EMAILS_FILE = path.join(DATA_DIR, 'emails.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
+// ===== HELPERS =====
 function readJSON(filePath) {
   if (!fs.existsSync(filePath)) return [];
   try {
@@ -37,7 +39,7 @@ let applicants = readJSON(APPLICANTS_FILE);
 let clients = readJSON(CLIENTS_FILE);
 let emails = readJSON(EMAILS_FILE);
 
-// ===== Applicant Scoring =====
+// ===== SCORING =====
 function scoreApplicant(a) {
   let score = 0;
   if (a.internet === "good") score += 20;
@@ -48,11 +50,12 @@ function scoreApplicant(a) {
   return score;
 }
 
-// ===== Routes =====
+// ===== ROUTES =====
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ===== APPLICANTS =====
 app.post('/add-applicant', (req, res) => {
   const data = req.body;
   data.id = Date.now();
@@ -67,6 +70,7 @@ app.post('/add-applicant', (req, res) => {
 
 app.get('/applicants', (req, res) => res.json(applicants));
 
+// ===== CLIENTS =====
 app.post('/add-client', (req, res) => {
   const data = req.body;
   data.id = Date.now();
@@ -81,8 +85,11 @@ app.post('/add-client', (req, res) => {
 });
 
 app.get('/clients', (req, res) => res.json(clients));
+
+// ===== EMAIL HISTORY =====
 app.get('/emails', (req, res) => res.json(emails));
 
+// ===== MATCHING =====
 app.get('/match', (req, res) => {
   const matches = clients.map(client => {
     const best = applicants
@@ -117,6 +124,7 @@ async function sendMail(to, subject, text) {
   });
 }
 
+// ===== SEND FIRST EMAIL =====
 app.post('/send-email', async (req, res) => {
   try {
     const { to, subject, text, clientName } = req.body;
@@ -135,7 +143,12 @@ app.post('/send-email', async (req, res) => {
 
     clients = clients.map(c => {
       if (c.name && clientName && c.name.toLowerCase() === clientName.toLowerCase()) {
-        return { ...c, email: to, status: "Contacted", followUpStage: 1 };
+        return {
+          ...c,
+          email: to,
+          status: "Contacted",
+          followUpStage: 1
+        };
       }
       return c;
     });
@@ -146,10 +159,12 @@ app.post('/send-email', async (req, res) => {
     res.json({ message: "Email sent" });
 
   } catch (error) {
+    console.error("EMAIL ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
+// ===== FOLLOW-UP =====
 app.post('/send-followup', async (req, res) => {
   try {
     const { to, clientName, role } = req.body;
@@ -182,6 +197,7 @@ Best regards`;
     res.json({ message: "Follow-up sent" });
 
   } catch (error) {
+    console.error("FOLLOW-UP ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -203,4 +219,27 @@ Best regards`;
   res.json({ message });
 });
 
+// ===== AUTO CLIENT FINDER =====
+app.get('/auto-clients', (req, res) => {
+
+  const sampleLeads = [
+    { name: "Shopify Store Alpha", role: "VA", email: "store1@gmail.com" },
+    { name: "Ecom Brand Beta", role: "Customer Support", email: "store2@gmail.com" },
+    { name: "Dropshipping Pro", role: "VA", email: "store3@gmail.com" }
+  ];
+
+  sampleLeads.forEach(lead => {
+    lead.id = Date.now() + Math.random();
+    lead.createdAt = new Date().toISOString();
+    lead.status = "New";
+    lead.followUpStage = 0;
+    clients.push(lead);
+  });
+
+  saveJSON(CLIENTS_FILE, clients);
+
+  res.json({ message: "Auto clients added", count: sampleLeads.length });
+});
+
+// ===== START SERVER =====
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
