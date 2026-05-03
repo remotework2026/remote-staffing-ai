@@ -212,9 +212,15 @@
       .then(data => alert(JSON.stringify(data)));
 
    function autoClients() {
-   fetch(API + "/auto-clients")
+  fetch(API + "/auto-clients")
   .then(res => res.json())
-  .then(data => alert(data.message + " (" + data.count + ")"));
+  .then(data => {
+    alert(data.message + " (" + data.count + ")");
+
+    // 👉 AUTO OPEN CLIENT LIST AFTER
+    viewClients();
+  })
+  .catch(err => alert("Error: " + err));
 
     }
   </script>
