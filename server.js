@@ -115,11 +115,18 @@ app.get('/match', (req, res) => {
   res.json(matches);
 });
 
+
+// ✅ FIXED SMTP CONFIG (IMPORTANT)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
@@ -157,8 +164,7 @@ app.post('/send-email', async (req, res) => {
           ...c,
           email: to,
           status: "Contacted",
-          followUpStage: 1,
-          lastEmailAt: new Date().toISOString()
+          followUpStage: 1
         };
       }
       return c;
@@ -170,7 +176,7 @@ app.post('/send-email', async (req, res) => {
     res.json({ message: "Email sent" });
 
   } catch (error) {
-    console.error("EMAIL ERROR:", error);
+    console.log("EMAIL ERROR:", error);
     res.status(500).json({ message: "Email failed", error: error.message });
   }
 });
@@ -196,7 +202,7 @@ Best regards`;
 
     emails.push({
       id: Date.now(),
-      type: "Manual Follow-up",
+      type: "Follow-up",
       clientName,
       to,
       subject,
@@ -209,7 +215,7 @@ Best regards`;
     res.json({ message: "Follow-up sent" });
 
   } catch (error) {
-    console.error("FOLLOW-UP ERROR:", error);
+    console.log("FOLLOW-UP ERROR:", error);
     res.status(500).json({ message: "Follow-up failed", error: error.message });
   }
 });
@@ -221,7 +227,7 @@ app.post('/generate-message', (req, res) => {
 
 I noticed your business and wanted to offer a reliable remote ${role}.
 
-We provide pre-trained remote workers ready to help with customer support, admin, and operations.
+We provide pre-trained remote workers ready to help with customer support and operations.
 
 Let me know if you're interested.
 
@@ -235,162 +241,81 @@ app.get('/auto-clients', (req, res) => {
 
   const sampleLeads = [
     { name: "Shopify Store Alpha", role: "VA", email: "store1@gmail.com" },
-    { name: "Ecom Brand Beta", role: "Customer Support", email: "store2@gmail.com" },
-    { name: "Dropshipping Pro", role: "VA", email: "store3@gmail.com" }
+    { name: "Ecom Brand Beta", role: "Customer Support", email: "store2@gmail.com" }
   ];
 
-  let added = 0;
-
   sampleLeads.forEach(lead => {
-    const exists = clients.some(c =>
-      c.email && c.email.toLowerCase() === lead.email.toLowerCase()
-    );
-
+    const exists = clients.some(c => c.email === lead.email);
     if (!exists) {
       clients.push({
         ...lead,
-        id: Date.now() + Math.random(),
-        createdAt: new Date().toISOString(),
+        id: Date.now(),
         status: "New",
         followUpStage: 0
       });
-      added++;
     }
   });
 
   saveJSON(CLIENTS_FILE, clients);
 
-  res.json({
-    message: "Auto clients added",
-    count: added,
-    totalClients: clients.length
-  });
+  res.json({ message: "Auto clients added" });
 });
 
 app.post('/import-clients-csv', (req, res) => {
-  try {
-    const { csv } = req.body;
+  const { csv } = req.body;
+  clients = readJSON(CLIENTS_FILE);
 
-    if (!csv) {
-      return res.status(400).json({ message: "No CSV provided" });
-    }
+  const lines = csv.trim().split("\n");
 
-    clients = readJSON(CLIENTS_FILE);
+  lines.slice(1).forEach(line => {
+    const [name, role, email] = line.split(",");
 
-    const lines = csv.trim().split("\n");
-    const imported = [];
-
-    lines.slice(1).forEach(line => {
-      const [name, role, email] = line.split(",").map(x => x.trim());
-
-      if (name && role && email) {
-        const exists = clients.some(c =>
-          c.email && c.email.toLowerCase() === email.toLowerCase()
-        );
-
-        if (!exists) {
-          const client = {
-            id: Date.now() + Math.random(),
-            name,
-            role,
-            email,
-            status: "New",
-            followUpStage: 0,
-            createdAt: new Date().toISOString()
-          };
-
-          clients.push(client);
-          imported.push(client);
-        }
-      }
+    clients.push({
+      id: Date.now() + Math.random(),
+      name,
+      role,
+      email,
+      status: "New",
+      followUpStage: 0
     });
+  });
 
-    saveJSON(CLIENTS_FILE, clients);
+  saveJSON(CLIENTS_FILE, clients);
 
-    res.json({
-      message: "CSV clients imported",
-      imported: imported.length,
-      totalClients: clients.length
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "CSV import failed", error: error.message });
-  }
+  res.json({ message: "CSV imported" });
 });
 
 async function sendAutoEmails() {
   clients = readJSON(CLIENTS_FILE);
   emails = readJSON(EMAILS_FILE);
 
-  const dailyLimit = Number(process.env.DAILY_EMAIL_LIMIT || 5);
-  const today = new Date().toISOString().slice(0, 10);
-
-  const sentToday = emails.filter(e =>
-    e.type === "Auto Initial Email" &&
-    e.sentAt &&
-    e.sentAt.slice(0, 10) === today
-  ).length;
-
-  let remaining = dailyLimit - sentToday;
-
-  if (remaining <= 0) {
-    return { message: "Daily email limit reached", sent: 0 };
-  }
-
-  const targets = clients
-    .filter(c => c.email && (!c.status || c.status === "New"))
-    .slice(0, remaining);
+  const targets = clients.filter(c => c.status === "New");
 
   let sent = 0;
 
   for (const client of targets) {
-    const role = client.role || "VA";
-    const subject = `Remote ${role} support`;
+    await sendMail(
+      client.email,
+      "Remote staffing support",
+      `Hi ${client.name}, we offer skilled remote staff.`
+    );
 
-    const text = `Hi ${client.name},
-
-I noticed your business and wanted to offer a reliable remote ${role}.
-
-We provide pre-screened remote workers who can help with customer support, admin tasks, order processing, and daily operations.
-
-Would you be open to seeing one or two qualified candidates?
-
-Best regards`;
-
-    await sendMail(client.email, subject, text);
+    client.status = "Contacted";
 
     emails.push({
-      id: Date.now() + Math.random(),
       type: "Auto Initial Email",
       clientName: client.name,
       to: client.email,
-      subject,
-      text,
       sentAt: new Date().toISOString()
-    });
-
-    clients = clients.map(c => {
-      if (c.id === client.id) {
-        return {
-          ...c,
-          status: "Contacted",
-          followUpStage: 1,
-          lastEmailAt: new Date().toISOString()
-        };
-      }
-      return c;
     });
 
     sent++;
   }
 
-  saveJSON(EMAILS_FILE, emails);
   saveJSON(CLIENTS_FILE, clients);
+  saveJSON(EMAILS_FILE, emails);
 
-  return {
-    message: "Auto email run completed",
-    sent
-  };
+  return { message: "Auto email run completed", sent };
 }
 
 app.post('/run-auto-emails', async (req, res) => {
@@ -398,20 +323,9 @@ app.post('/run-auto-emails', async (req, res) => {
     const result = await sendAutoEmails();
     res.json(result);
   } catch (error) {
-    console.error("AUTO EMAIL ERROR:", error);
-    res.status(500).json({
-      message: "Auto email failed",
-      error: error.message,
-      sent: 0
-    });
+    console.log("AUTO EMAIL ERROR:", error);
+    res.status(500).json({ message: "Auto email failed", sent: 0 });
   }
 });
-
-if (process.env.ENABLE_AUTO_EMAIL === "true") {
-  cron.schedule('0 9 * * *', async () => {
-    console.log("Running daily auto email sender...");
-    await sendAutoEmails();
-  });
-}
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
