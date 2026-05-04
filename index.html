@@ -58,6 +58,10 @@
   <script>
     const API = "";
 
+    function safeText(value) {
+      return String(value || "").replace(/'/g, "\\'");
+    }
+
     function openPopup(title, html) {
       const win = window.open("", "_blank", "width=750,height=700");
 
@@ -84,9 +88,9 @@
     }
 
     function selectClient(name, email, role) {
-      document.getElementById("email_client_name").value = name;
-      document.getElementById("email_to").value = email;
-      document.getElementById("email_role").value = role;
+      document.getElementById("email_client_name").value = name || "";
+      document.getElementById("email_to").value = email || "";
+      document.getElementById("email_role").value = role || "";
       alert("Client loaded: " + name);
     }
 
@@ -105,7 +109,8 @@
         })
       })
       .then(res => res.json())
-      .then(data => alert("Applicant Added! Score: " + data.score));
+      .then(data => alert("Applicant Added! Score: " + data.score))
+      .catch(err => alert("Error: " + err));
     }
 
     function addClient() {
@@ -119,7 +124,8 @@
         })
       })
       .then(res => res.json())
-      .then(() => alert("Client Added!"));
+      .then(() => alert("Client Added!"))
+      .catch(err => alert("Error: " + err));
     }
 
     function autoClients() {
@@ -128,7 +134,8 @@
       .then(data => {
         alert(data.message + " (" + data.count + ")");
         viewClients();
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function importClientsCSV() {
@@ -143,7 +150,8 @@
       .then(data => {
         alert(data.message + " | Imported: " + data.imported);
         viewClients();
-      });
+      })
+      .catch(err => alert("CSV Import Error: " + err));
     }
 
     function viewClients() {
@@ -152,19 +160,27 @@
       .then(data => {
         let html = "<h2>Clients</h2><p>Click to load into email form</p>";
 
+        if (data.length === 0) html += "<p>No clients saved yet.</p>";
+
         data.forEach(c => {
+          const name = safeText(c.name);
+          const email = safeText(c.email);
+          const role = safeText(c.role);
+
           html += `
-            <div class="card" onclick="window.opener.selectClient('${c.name}','${c.email}','${c.role}')">
+            <div class="card" onclick="window.opener.selectClient('${name}','${email}','${role}')">
               <b>${c.name}</b><br>
-              Email: ${c.email}<br>
-              Role: ${c.role}<br>
-              Status: ${c.status || "New"}
+              Email: ${c.email || "N/A"}<br>
+              Role: ${c.role || "N/A"}<br>
+              Status: ${c.status || "New"}<br>
+              Follow-up: ${c.followUpStage || 0}
             </div>
           `;
         });
 
         openPopup("Clients", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function viewApplicants() {
@@ -173,12 +189,21 @@
       .then(data => {
         let html = "<h2>Applicants</h2>";
 
+        if (data.length === 0) html += "<p>No applicants saved yet.</p>";
+
         data.forEach(a => {
-          html += `<div class="card"><b>${a.name}</b><br>Score: ${a.score}</div>`;
+          html += `
+            <div class="card">
+              <b>${a.name}</b><br>
+              Role: ${a.role}<br>
+              Score: ${a.score}/100
+            </div>
+          `;
         });
 
         openPopup("Applicants", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function getMatch() {
@@ -187,12 +212,21 @@
       .then(data => {
         let html = "<h2>Matches</h2>";
 
+        if (data.length === 0) html += "<p>No matches found yet.</p>";
+
         data.forEach(m => {
-          html += `<div class="card">${m.client.name} → ${m.best ? m.best.name : "No match"}</div>`;
+          html += `
+            <div class="card">
+              <b>Client:</b> ${m.client.name}<br>
+              Needed: ${m.client.role}<br>
+              Match: ${m.best ? m.best.name + " | Score: " + m.best.score : "No match"}
+            </div>
+          `;
         });
 
         openPopup("Matches", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function viewEmails() {
@@ -201,12 +235,23 @@
       .then(data => {
         let html = "<h2>Email History</h2>";
 
+        if (data.length === 0) html += "<p>No email history yet.</p>";
+
         data.forEach(e => {
-          html += `<div class="card">${e.clientName} → ${e.subject}</div>`;
+          html += `
+            <div class="card">
+              <b>${e.type || "Email"}</b><br>
+              Client: ${e.clientName || "N/A"}<br>
+              To: ${e.to || "N/A"}<br>
+              Subject: ${e.subject || "N/A"}<br>
+              Sent: ${e.sentAt ? new Date(e.sentAt).toLocaleString() : "N/A"}
+            </div>
+          `;
         });
 
         openPopup("Emails", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function generateMessage() {
@@ -214,14 +259,16 @@
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-          clientName: document.getElementById("email_client_name").value,
-          role: document.getElementById("email_role").value
+          clientName: document.getElementById("email_client_name").value || "there",
+          role: document.getElementById("email_role").value || "VA"
         })
       })
       .then(res => res.json())
       .then(data => {
         document.getElementById("email_text").value = data.message;
-      });
+        document.getElementById("email_subject").value = "Remote staffing support";
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function sendEmail() {
@@ -236,7 +283,8 @@
         })
       })
       .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)));
+      .then(data => alert(JSON.stringify(data)))
+      .catch(err => alert("Error: " + err));
     }
 
     function sendFollowUp() {
@@ -246,11 +294,12 @@
         body: JSON.stringify({
           to: document.getElementById("email_to").value,
           clientName: document.getElementById("email_client_name").value,
-          role: document.getElementById("email_role").value
+          role: document.getElementById("email_role").value || "VA"
         })
       })
       .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)));
+      .then(data => alert(JSON.stringify(data)))
+      .catch(err => alert("Error: " + err));
     }
 
     function runAutoEmails() {
@@ -259,9 +308,10 @@
       })
       .then(res => res.json())
       .then(data => {
-        alert(data.message + " | Sent: " + data.sent);
+        alert((data.message || "Done") + " | Sent: " + (data.sent || 0) + (data.error ? " | Error: " + data.error : ""));
         viewEmails();
-      });
+      })
+      .catch(err => alert("Auto Email Error: " + err));
     }
   </script>
 </body>
