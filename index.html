@@ -36,6 +36,13 @@
 
   <hr>
 
+  <h2>📥 Import Clients CSV</h2>
+  <p>Format: name,role,email</p>
+  <textarea id="csv_clients" rows="8" cols="60" placeholder="name,role,email&#10;ABC Store,VA,abc@gmail.com&#10;XYZ Brand,Customer Support,xyz@gmail.com"></textarea><br>
+  <button onclick="importClientsCSV()">Import CSV Clients</button>
+
+  <hr>
+
   <h2>📩 Send Email</h2>
   <input id="email_to" placeholder="Client Email"><br>
   <input id="email_client_name" placeholder="Client Name"><br>
@@ -46,8 +53,6 @@
   <button onclick="generateMessage()">Generate AI Message</button>
   <button onclick="sendEmail()">Send First Email</button>
   <button onclick="sendFollowUp()">Send Follow-Up</button>
-
-  <div id="output"></div>
 
   <script>
     const API = "";
@@ -65,27 +70,10 @@
         <head>
           <title>${title}</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background: #f5f5f5;
-            }
-            .card {
-              background: white;
-              padding: 15px;
-              margin: 10px 0;
-              border-radius: 8px;
-              border: 1px solid #ddd;
-              cursor: pointer;
-            }
-            .card:hover {
-              background: #eef6ff;
-            }
-            .note {
-              color: #555;
-              font-size: 14px;
-              margin-bottom: 15px;
-            }
+            body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+            .card { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+            .card:hover { background: #eef6ff; }
+            .note { color: #555; font-size: 14px; margin-bottom: 15px; }
           </style>
         </head>
         <body>${html}</body>
@@ -99,7 +87,6 @@
       document.getElementById("email_client_name").value = name || "";
       document.getElementById("email_to").value = email || "";
       document.getElementById("email_role").value = role || "";
-
       alert("Client loaded: " + name);
     }
 
@@ -145,6 +132,22 @@
         viewClients();
       })
       .catch(err => alert("Error: " + err));
+    }
+
+    function importClientsCSV() {
+      fetch(API + "/import-clients-csv", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          csv: document.getElementById("csv_clients").value
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message + " | Imported: " + data.imported);
+        viewClients();
+      })
+      .catch(err => alert("CSV Import Error: " + err));
     }
 
     function viewApplicants() {
