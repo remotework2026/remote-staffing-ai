@@ -30,7 +30,7 @@
   <h2>CRM</h2>
   <button onclick="autoClients()">Auto Find Clients</button>
   <button onclick="viewApplicants()">View Applicants</button>
-  <button onclick="alert('Button works')">View Clients</button>
+  <button onclick="viewClients()">View Clients</button>
   <button onclick="getMatch()">Find Matches</button>
   <button onclick="viewEmails()">View Email History</button>
 
@@ -118,7 +118,7 @@
     }
 
     function viewClients() {
-  alert("View Clients clicked");
+  alert("Loading clients...");
 
   fetch(API + "/clients")
   .then(res => res.json())
@@ -126,6 +126,10 @@
     alert("Clients found: " + data.length);
 
     let html = "<h2>Clients</h2>";
+
+    if (data.length === 0) {
+      html += "<p>No clients saved yet.</p>";
+    }
 
     data.forEach(c => {
       html += `
