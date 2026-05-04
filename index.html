@@ -54,6 +54,12 @@
 
     function openPopup(title, html) {
       const win = window.open("", "_blank", "width=700,height=700");
+
+      if (!win) {
+        alert("Popup blocked. Please allow popups for this site.");
+        return;
+      }
+
       win.document.write(`
         <html>
         <head>
@@ -66,6 +72,7 @@
         <body>${html}</body>
         </html>
       `);
+
       win.document.close();
     }
 
@@ -84,7 +91,8 @@
         })
       })
       .then(res => res.json())
-      .then(data => alert("Applicant Added! Score: " + data.score));
+      .then(data => alert("Applicant Added! Score: " + data.score))
+      .catch(err => alert("Error: " + err));
     }
 
     function addClient() {
@@ -98,7 +106,18 @@
         })
       })
       .then(res => res.json())
-      .then(() => alert("Client Added!"));
+      .then(() => alert("Client Added!"))
+      .catch(err => alert("Error: " + err));
+    }
+
+    function autoClients() {
+      fetch(API + "/auto-clients")
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message + " (" + data.count + ")");
+        viewClients();
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function viewApplicants() {
@@ -106,63 +125,53 @@
       .then(res => res.json())
       .then(data => {
         let html = "<h2>Applicants</h2>";
+
+        if (data.length === 0) {
+          html += "<p>No applicants saved yet.</p>";
+        }
+
         data.forEach(a => {
-          html += `<div class="card">
-            <b>${a.name}</b><br>
-            Role: ${a.role}<br>
-            Score: ${a.score}/100
-          </div>`;
+          html += `
+            <div class="card">
+              <b>${a.name}</b><br>
+              Role: ${a.role}<br>
+              Score: ${a.score}/100<br>
+              Internet: ${a.internet}<br>
+              English: ${a.english}
+            </div>
+          `;
         });
+
         openPopup("Applicants", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function viewClients() {
-  alert("Loading clients...");
-
-  fetch(API + "/clients")
-  .then(res => res.json())
-  .then(data => {
-    alert("Clients found: " + data.length);
-
-    let html = "<h2>Clients</h2>";
-
-    if (data.length === 0) {
-      html += "<p>No clients saved yet.</p>";
-    }
-
-    data.forEach(c => {
-      html += `
-        <div class="card">
-          <b>${c.name}</b><br>
-          Email: ${c.email || "N/A"}<br>
-          Role: ${c.role}<br>
-          Status: ${c.status || "New"}<br>
-          Follow-up: ${c.followUpStage || 0}
-        </div>
-      `;
-    });
-
-    openPopup("Clients", html);
-  })
-  .catch(err => alert("Error: " + err));
-}
-
-    function viewEmails() {
-      fetch(API + "/emails")
+      fetch(API + "/clients")
       .then(res => res.json())
       .then(data => {
-        let html = "<h2>Email History</h2>";
-        data.forEach(e => {
-          html += `<div class="card">
-            <b>${e.type}</b><br>
-            Client: ${e.clientName}<br>
-            To: ${e.to}<br>
-            Subject: ${e.subject}
-          </div>`;
+        let html = "<h2>Clients</h2>";
+
+        if (data.length === 0) {
+          html += "<p>No clients saved yet.</p>";
+        }
+
+        data.forEach(c => {
+          html += `
+            <div class="card">
+              <b>${c.name}</b><br>
+              Email: ${c.email || "N/A"}<br>
+              Role: ${c.role}<br>
+              Status: ${c.status || "New"}<br>
+              Follow-up: ${c.followUpStage || 0}
+            </div>
+          `;
         });
-        openPopup("Emails", html);
-      });
+
+        openPopup("Clients", html);
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function getMatch() {
@@ -170,15 +179,55 @@
       .then(res => res.json())
       .then(data => {
         let html = "<h2>Matches</h2>";
+
+        if (data.length === 0) {
+          html += "<p>No clients found yet.</p>";
+        }
+
         data.forEach(item => {
-          html += `<div class="card">
-            <b>${item.client.name}</b><br>
-            Needed: ${item.client.role}<br>
-            Match: ${item.best ? item.best.name + " (Score " + item.best.score + ")" : "None"}
-          </div>`;
+          html += `
+            <div class="card">
+              <b>Client:</b> ${item.client.name}<br>
+              Needed Role: ${item.client.role}<br><br>
+              ${
+                item.best
+                ? `<b>Best Match:</b> ${item.best.name}<br>Score: ${item.best.score}/100`
+                : `No matching applicant found`
+              }
+            </div>
+          `;
         });
+
         openPopup("Matches", html);
-      });
+      })
+      .catch(err => alert("Error: " + err));
+    }
+
+    function viewEmails() {
+      fetch(API + "/emails")
+      .then(res => res.json())
+      .then(data => {
+        let html = "<h2>Email History</h2>";
+
+        if (data.length === 0) {
+          html += "<p>No email history yet.</p>";
+        }
+
+        data.forEach(e => {
+          html += `
+            <div class="card">
+              <b>${e.type}</b><br>
+              Client: ${e.clientName || "N/A"}<br>
+              To: ${e.to}<br>
+              Subject: ${e.subject}<br>
+              Sent: ${e.sentAt ? new Date(e.sentAt).toLocaleString() : "N/A"}
+            </div>
+          `;
+        });
+
+        openPopup("Email History", html);
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function generateMessage() {
@@ -186,14 +235,16 @@
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-          clientName: document.getElementById("c_name").value || "there",
-          role: document.getElementById("c_role").value || "VA"
+          clientName: document.getElementById("email_client_name").value || document.getElementById("c_name").value || "there",
+          role: document.getElementById("email_role").value || document.getElementById("c_role").value || "VA"
         })
       })
       .then(res => res.json())
       .then(data => {
         document.getElementById("email_text").value = data.message;
-      });
+        document.getElementById("email_subject").value = "Remote staffing support";
+      })
+      .catch(err => alert("Error: " + err));
     }
 
     function sendEmail() {
@@ -208,7 +259,8 @@
         })
       })
       .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)));
+      .then(data => alert(JSON.stringify(data)))
+      .catch(err => alert("Error: " + err));
     }
 
     function sendFollowUp() {
@@ -222,19 +274,8 @@
         })
       })
       .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)));
-
-   function autoClients() {
-  fetch(API + "/auto-clients")
-  .then(res => res.json())
-  .then(data => {
-    alert(data.message + " (" + data.count + ")");
-
-    // 👉 AUTO OPEN CLIENT LIST AFTER
-    viewClients();
-  })
-  .catch(err => alert("Error: " + err));
-
+      .then(data => alert(JSON.stringify(data)))
+      .catch(err => alert("Error: " + err));
     }
   </script>
 </body>
