@@ -2,9 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
+const sgMail = require('@sendgrid/mail');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +13,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// =====================
+// SENDGRID SETUP
+// =====================
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+console.log("SENDGRID_API_KEY loaded:", process.env.SENDGRID_API_KEY ? "YES" : "NO");
+
+// =====================
+// FILE SETUP
+// =====================
 const DATA_DIR = path.join(__dirname, 'data');
 const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json');
 const EMAILS_FILE = path.join(DATA_DIR, 'emails.json');
@@ -35,31 +45,25 @@ function saveJSON(file, data) {
 let clients = readJSON(CLIENTS_FILE);
 let emails = readJSON(EMAILS_FILE);
 
-console.log("MAILTRAP_USER loaded:", process.env.MAILTRAP_USER ? "YES" : "NO");
-console.log("MAILTRAP_PASS loaded:", process.env.MAILTRAP_PASS ? "YES" : "NO");
-
-const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io",
-  port: 2525,
-  auth: {
-    user: process.env.MAILTRAP_USER,
-    pass: process.env.MAILTRAP_PASS
-  }
-});
-
+// =====================
+// EMAIL FUNCTION
+// =====================
 async function sendMail(to, subject, text) {
-  await transporter.sendMail({
-    from: "test@mailtrap.io",
+  const msg = {
     to,
+    from: "your_verified_email@gmail.com", // 👈 CHANGE THIS
     subject,
     text
-  });
+  };
+
+  await sgMail.send(msg);
 }
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// =====================
+// ROUTES
+// =====================
 
+// ADD CLIENT
 app.post('/add-client', (req, res) => {
   clients = readJSON(CLIENTS_FILE);
 
@@ -84,11 +88,13 @@ app.post('/add-client', (req, res) => {
   res.json({ message: "Client added" });
 });
 
+// VIEW CLIENTS
 app.get('/clients', (req, res) => {
   clients = readJSON(CLIENTS_FILE);
   res.json(clients);
 });
 
+// IMPORT CSV
 app.post('/import-clients-csv', (req, res) => {
   try {
     const { csv } = req.body;
@@ -106,7 +112,7 @@ app.post('/import-clients-csv', (req, res) => {
       const [name, role, email] = line.split(",").map(x => x.trim());
 
       if (name && role && email) {
-        const exists = clients.some(c => c.email && c.email.toLowerCase() === email.toLowerCase());
+        const exists = clients.some(c => c.email === email);
 
         if (!exists) {
           clients.push({
@@ -126,7 +132,10 @@ app.post('/import-clients-csv', (req, res) => {
 
     saveJSON(CLIENTS_FILE, clients);
 
-    res.json({ message: "CSV imported", imported });
+    res.json({
+      message: "CSV imported",
+      imported
+    });
 
   } catch (error) {
     console.log("CSV ERROR:", error);
@@ -138,17 +147,21 @@ app.post('/import-clients-csv', (req, res) => {
   }
 });
 
+// EMAIL HISTORY
 app.get('/emails', (req, res) => {
   emails = readJSON(EMAILS_FILE);
   res.json(emails);
 });
 
+// =====================
+// AUTO EMAIL SYSTEM
+// =====================
 async function sendAutoEmails() {
   clients = readJSON(CLIENTS_FILE);
   emails = readJSON(EMAILS_FILE);
 
-  if (!process.env.MAILTRAP_USER || !process.env.MAILTRAP_PASS) {
-    throw new Error("Mailtrap credentials missing in Render Environment");
+  if (!process.env.SENDGRID_API_KEY) {
+    throw new Error("SendGrid API key missing");
   }
 
   const targets = clients.filter(c => c.status === "New" && c.email);
@@ -156,30 +169,35 @@ async function sendAutoEmails() {
   let sent = 0;
 
   for (const client of targets) {
-    await sendMail(
-      client.email,
-      "Remote staffing support",
-      `Hi ${client.name},
+    try {
+      await sendMail(
+        client.email,
+        "Remote staffing support",
+        `Hi ${client.name},
 
 We provide trained remote staff for your business.
 
 Let me know if you're interested.
 
 Best regards`
-    );
+      );
 
-    client.status = "Contacted";
+      client.status = "Contacted";
 
-    emails.push({
-      id: Date.now() + Math.random(),
-      type: "Auto Email",
-      clientName: client.name,
-      to: client.email,
-      subject: "Remote staffing support",
-      sentAt: new Date().toISOString()
-    });
+      emails.push({
+        id: Date.now() + Math.random(),
+        type: "Auto Email",
+        clientName: client.name,
+        to: client.email,
+        subject: "Remote staffing support",
+        sentAt: new Date().toISOString()
+      });
 
-    sent++;
+      sent++;
+
+    } catch (err) {
+      console.log("SENDGRID ERROR:", err.response?.body || err.message);
+    }
   }
 
   saveJSON(CLIENTS_FILE, clients);
@@ -191,6 +209,7 @@ Best regards`
   };
 }
 
+// RUN AUTO EMAIL
 app.post('/run-auto-emails', async (req, res) => {
   try {
     const result = await sendAutoEmails();
@@ -206,6 +225,9 @@ app.post('/run-auto-emails', async (req, res) => {
   }
 });
 
+// =====================
+// START SERVER
+// =====================
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
