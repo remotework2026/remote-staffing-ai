@@ -51,7 +51,7 @@ let emails = readJSON(EMAILS_FILE);
 async function sendMail(to, subject, text) {
   const msg = {
     to,
-    from: "your_verified_email@gmail.com", // 👈 CHANGE THIS
+    from: "digitaltrading76@gmail.com", // 👈 CHANGE THIS
     subject,
     text
   };
