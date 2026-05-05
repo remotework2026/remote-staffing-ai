@@ -73,7 +73,8 @@ app.post('/add-client', (req, res) => {
     email,
     status: "New",
     followUpStage: 0,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    lastEmailAt: null
   });
 
   saveJSON(CLIENTS_FILE, clients);
@@ -109,7 +110,8 @@ app.post('/import-clients-csv', (req, res) => {
           email,
           status: "New",
           followUpStage: 0,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          lastEmailAt: null
         });
         imported++;
       }
@@ -132,32 +134,73 @@ async function sendAutoEmails() {
     throw new Error("SendGrid API key missing");
   }
 
-  const targets = clients.filter(c => c.status === "New" && c.email);
   let sent = 0;
   let failed = 0;
 
-  for (const client of targets) {
-    const ok = await sendMail(
-      client.email,
-      "Remote staffing support",
-      `Hi ${client.name},
+  for (const client of clients) {
+    if (!client.email) continue;
+    if (client.status === "Replied" || client.status === "Closed") continue;
 
-We provide trained remote staff for your business.
+    const lastEmailAt = client.lastEmailAt || client.createdAt;
+    const daysSinceLastEmail = (Date.now() - new Date(lastEmailAt)) / (1000 * 60 * 60 * 24);
 
-Let me know if you're interested.
+    let subject = "";
+    let text = "";
+    let emailType = "";
 
-Best regards`
-    );
+    if (client.followUpStage === 0 || client.status === "New") {
+      subject = "Quick question";
+      text = `Hi ${client.name},
+
+Quick question — are you currently hiring any remote staff?
+
+I help businesses find trained VAs and support agents.
+
+Happy to share options if you're open.
+
+Best,
+Emerson`;
+      emailType = "Initial Email";
+    } else if (client.followUpStage === 1 && daysSinceLastEmail >= 2) {
+      subject = "Just following up";
+      text = `Hi ${client.name},
+
+Just wanted to follow up on my previous message.
+
+Are you open to seeing one or two trained remote candidates?
+
+Best,
+Emerson`;
+      emailType = "Follow-up 1";
+    } else if (client.followUpStage === 2 && daysSinceLastEmail >= 5) {
+      subject = "Last follow-up";
+      text = `Hi ${client.name},
+
+Just checking one last time.
+
+If you're not looking for remote support right now, no worries at all.
+
+Best,
+Emerson`;
+      emailType = "Follow-up 2";
+    } else {
+      continue;
+    }
+
+    const ok = await sendMail(client.email, subject, text);
 
     if (ok) {
-      client.status = "Contacted";
+      client.status = client.followUpStage === 0 ? "Contacted" : `Follow-up ${client.followUpStage} Sent`;
+      client.followUpStage = client.followUpStage + 1;
+      client.lastEmailAt = new Date().toISOString();
 
       emails.push({
         id: Date.now() + Math.random(),
-        type: "Auto Email",
+        type: emailType,
         clientName: client.name,
         to: client.email,
-        subject: "Remote staffing support",
+        subject,
+        text,
         sentAt: new Date().toISOString()
       });
 
