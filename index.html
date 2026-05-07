@@ -6,32 +6,8 @@
 <body>
   <h1>🚀 Remote Staffing Dashboard</h1>
 
-  <h2>Add Applicant</h2>
-  <input id="a_name" placeholder="Name"><br>
-  <input id="a_role" placeholder="Role e.g. VA"><br>
-  <select id="a_internet">
-    <option value="good">Good Internet</option>
-    <option value="bad">Bad Internet</option>
-  </select><br>
-  <select id="a_english">
-    <option value="good">Good English</option>
-    <option value="bad">Bad English</option>
-  </select><br>
-  <button onclick="addApplicant()">Add Applicant</button>
-
-  <h2>Add Client</h2>
-  <input id="c_name" placeholder="Client Name"><br>
-  <input id="c_role" placeholder="Needed Role"><br>
-  <input id="c_email" placeholder="Client Email"><br>
-  <button onclick="addClient()">Add Client</button>
-
-  <hr>
-
   <h2>CRM</h2>
-  <button onclick="autoClients()">Auto Find Clients</button>
-  <button onclick="viewApplicants()">View Applicants</button>
   <button onclick="viewClients()">View Clients</button>
-  <button onclick="getMatch()">Find Matches</button>
   <button onclick="viewEmails()">View Email History</button>
   <button onclick="runAutoEmails()">Run Auto Emails</button>
   <button onclick="runTestFollowups()">Test Follow-Ups</button>
@@ -45,16 +21,11 @@
 
   <hr>
 
-  <h2>📩 Send Email</h2>
+  <h2>📩 Selected Client</h2>
   <input id="email_to" placeholder="Client Email"><br>
   <input id="email_client_name" placeholder="Client Name"><br>
   <input id="email_role" placeholder="Role e.g. VA"><br>
-  <input id="email_subject" placeholder="Subject"><br>
-  <textarea id="email_text" rows="6" cols="50"></textarea><br>
-
-  <button onclick="generateMessage()">Generate AI Message</button>
-  <button onclick="sendEmail()">Send First Email</button>
-  <button onclick="sendFollowUp()">Send Follow-Up</button>
+  <button onclick="markClientReplied()">Mark Client Replied</button>
 
   <script>
     const API = "";
@@ -64,7 +35,7 @@
     }
 
     function openPopup(title, html) {
-      const win = window.open("", "_blank", "width=750,height=700");
+      const win = window.open("", "_blank", "width=850,height=700");
 
       if (!win) {
         alert("Popup blocked. Please allow popups.");
@@ -79,6 +50,7 @@
             body { font-family: Arial; padding: 20px; background:#f5f5f5; }
             .card { background:white; padding:15px; margin:10px; border-radius:8px; border:1px solid #ddd; cursor:pointer; }
             .card:hover { background:#eef6ff; }
+            .tag { display:inline-block; padding:3px 8px; background:#eee; border-radius:5px; margin-top:5px; }
           </style>
         </head>
         <body>${html}</body>
@@ -93,50 +65,6 @@
       document.getElementById("email_to").value = email || "";
       document.getElementById("email_role").value = role || "";
       alert("Client loaded: " + name);
-    }
-
-    function addApplicant() {
-      fetch(API + "/add-applicant", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          name: document.getElementById("a_name").value,
-          role: document.getElementById("a_role").value,
-          internet: document.getElementById("a_internet").value,
-          english: document.getElementById("a_english").value,
-          experience: "yes",
-          tools: "yes",
-          available: "yes"
-        })
-      })
-      .then(res => res.json())
-      .then(data => alert("Applicant Added! Score: " + data.score))
-      .catch(err => alert("Error: " + err));
-    }
-
-    function addClient() {
-      fetch(API + "/add-client", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          name: document.getElementById("c_name").value,
-          role: document.getElementById("c_role").value,
-          email: document.getElementById("c_email").value
-        })
-      })
-      .then(res => res.json())
-      .then(() => alert("Client Added!"))
-      .catch(err => alert("Error: " + err));
-    }
-
-    function autoClients() {
-      fetch(API + "/auto-clients")
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message + " (" + data.count + ")");
-        viewClients();
-      })
-      .catch(err => alert("Error: " + err));
     }
 
     function importClientsCSV() {
@@ -159,7 +87,7 @@
       fetch(API + "/clients")
       .then(res => res.json())
       .then(data => {
-        let html = "<h2>Clients</h2><p>Click to load into email form</p>";
+        let html = "<h2>Clients</h2><p>Click a client to load them.</p>";
 
         if (data.length === 0) html += "<p>No clients saved yet.</p>";
 
@@ -173,59 +101,14 @@
               <b>${c.name}</b><br>
               Email: ${c.email || "N/A"}<br>
               Role: ${c.role || "N/A"}<br>
-              Status: ${c.status || "New"}<br>
-              Follow-up: ${c.followUpStage || 0}
+              <span class="tag">Status: ${c.status || "New"}</span><br>
+              <span class="tag">Follow-up Stage: ${c.followUpStage || 0}</span><br>
+              ${c.repliedAt ? `<small>Replied: ${new Date(c.repliedAt).toLocaleString()}</small>` : ""}
             </div>
           `;
         });
 
         openPopup("Clients", html);
-      })
-      .catch(err => alert("Error: " + err));
-    }
-
-    function viewApplicants() {
-      fetch(API + "/applicants")
-      .then(res => res.json())
-      .then(data => {
-        let html = "<h2>Applicants</h2>";
-
-        if (data.length === 0) html += "<p>No applicants saved yet.</p>";
-
-        data.forEach(a => {
-          html += `
-            <div class="card">
-              <b>${a.name}</b><br>
-              Role: ${a.role}<br>
-              Score: ${a.score}/100
-            </div>
-          `;
-        });
-
-        openPopup("Applicants", html);
-      })
-      .catch(err => alert("Error: " + err));
-    }
-
-    function getMatch() {
-      fetch(API + "/match")
-      .then(res => res.json())
-      .then(data => {
-        let html = "<h2>Matches</h2>";
-
-        if (data.length === 0) html += "<p>No matches found yet.</p>";
-
-        data.forEach(m => {
-          html += `
-            <div class="card">
-              <b>Client:</b> ${m.client.name}<br>
-              Needed: ${m.client.role}<br>
-              Match: ${m.best ? m.best.name + " | Score: " + m.best.score : "No match"}
-            </div>
-          `;
-        });
-
-        openPopup("Matches", html);
       })
       .catch(err => alert("Error: " + err));
     }
@@ -255,64 +138,45 @@
       .catch(err => alert("Error: " + err));
     }
 
-    function generateMessage() {
-      fetch(API + "/generate-message", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          clientName: document.getElementById("email_client_name").value || "there",
-          role: document.getElementById("email_role").value || "VA"
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("email_text").value = data.message;
-        document.getElementById("email_subject").value = "Remote staffing support";
-      })
-      .catch(err => alert("Error: " + err));
-    }
-
-    function sendEmail() {
-      fetch(API + "/send-email", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          to: document.getElementById("email_to").value,
-          clientName: document.getElementById("email_client_name").value,
-          subject: document.getElementById("email_subject").value,
-          text: document.getElementById("email_text").value
-        })
-      })
-      .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)))
-      .catch(err => alert("Error: " + err));
-    }
-
-    function sendFollowUp() {
-      fetch(API + "/send-followup", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          to: document.getElementById("email_to").value,
-          clientName: document.getElementById("email_client_name").value,
-          role: document.getElementById("email_role").value || "VA"
-        })
-      })
-      .then(res => res.json())
-      .then(data => alert(JSON.stringify(data)))
-      .catch(err => alert("Error: " + err));
-    }
-
     function runAutoEmails() {
-      fetch(API + "/run-auto-emails", {
-        method: "POST"
-      })
+      fetch(API + "/run-auto-emails", { method: "POST" })
       .then(res => res.json())
       .then(data => {
-        alert((data.message || "Done") + " | Sent: " + (data.sent || 0) + (data.error ? " | Error: " + data.error : ""));
+        alert(data.message + " | Sent: " + data.sent);
         viewEmails();
       })
       .catch(err => alert("Auto Email Error: " + err));
+    }
+
+    function runTestFollowups() {
+      fetch(API + "/test-followups", { method: "POST" })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message + " | Sent: " + data.sent);
+        viewEmails();
+      })
+      .catch(err => alert("Follow-up Error: " + err));
+    }
+
+    function markClientReplied() {
+      const email = document.getElementById("email_to").value;
+
+      if (!email) {
+        alert("Select or enter a client email first.");
+        return;
+      }
+
+      fetch(API + "/mark-replied", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        viewClients();
+      })
+      .catch(err => alert("Mark replied error: " + err));
     }
   </script>
 </body>
