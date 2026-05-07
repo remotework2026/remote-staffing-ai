@@ -1,128 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Remote Staffing AI</title>
+  <title>Remote Staff Dashboard</title>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 20px;
+    body{
+      font-family:Arial;
+      background:#020617;
+      color:white;
+      padding:20px;
     }
 
-    h1, h2 {
-      color: #38bdf8;
+    h1{
+      color:#38bdf8;
     }
 
-    button {
-      background: #38bdf8;
-      border: none;
-      color: #02111b;
-      padding: 12px 18px;
-      border-radius: 8px;
-      margin: 5px;
-      cursor: pointer;
-      font-weight: bold;
+    button{
+      background:#38bdf8;
+      color:#020617;
+      border:none;
+      padding:12px 18px;
+      border-radius:8px;
+      margin:5px;
+      cursor:pointer;
+      font-weight:bold;
     }
 
-    button:hover {
-      opacity: 0.9;
+    .section{
+      background:#111827;
+      border:1px solid #1e293b;
+      padding:25px;
+      border-radius:18px;
+      margin-bottom:25px;
     }
 
-    input, textarea {
-      width: 100%;
-      max-width: 500px;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      background: #111827;
-      color: white;
-    }
-
-    textarea {
-      height: 120px;
-    }
-
-    .section {
-      background: #111827;
-      padding: 25px;
-      border-radius: 18px;
-      margin-bottom: 25px;
-      border: 1px solid #1e293b;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-      gap: 20px;
+    textarea,input{
+      width:100%;
+      max-width:600px;
+      padding:12px;
+      border-radius:8px;
+      border:1px solid #334155;
+      background:#020617;
+      color:white;
+      margin-top:10px;
     }
   </style>
 </head>
 
 <body>
 
-<h1>🚀 Remote Staffing Dashboard</h1>
+<h1>🚀 Remote Staff Dashboard</h1>
 
 <div class="section">
 
-  <button onclick="window.open('/landing.html','_blank')">
-    Go to Landing Page
+  <button onclick="window.location.href='/landing.html'">
+    Home
   </button>
 
-  <button onclick="viewClients()">View Clients</button>
-  <button onclick="viewEmails()">View Email History</button>
-  <button onclick="runAutoEmails()">Run Auto Emails</button>
-  <button onclick="runTestFollowups()">Test Follow-Ups</button>
+  <button onclick="viewClients()">
+    View Clients
+  </button>
+
+  <button onclick="viewApplicants()">
+    View Applicants
+  </button>
+
+  <button onclick="findMatches()">
+    Match Clients + Applicants
+  </button>
+
+  <button onclick="viewEmails()">
+    View Email History
+  </button>
+
+  <button onclick="runAutoEmails()">
+    Run Auto Emails
+  </button>
+
+  <button onclick="runTestFollowups()">
+    Test Follow-Ups
+  </button>
+
+  <button onclick="logout()">
+    Logout
+  </button>
 
 </div>
 
 <div class="section">
-  <h2>📥 Import Clients CSV</h2>
 
-  <p>Format:</p>
+  <h2>Import Clients CSV</h2>
 
-  <pre>
-name,role,email
-ABC Store,VA,abc@gmail.com
-  </pre>
+  <textarea id="csv_clients" rows="8"></textarea>
 
-  <textarea id="csv_clients"></textarea><br>
+  <br>
 
   <button onclick="importClientsCSV()">
-    Import CSV Clients
+    Import CSV
   </button>
-</div>
 
-<div class="section">
-  <h2>📩 Selected Client</h2>
-
-  <input id="email_client_name" placeholder="Client Name">
-  <input id="email_to" placeholder="Client Email">
-  <input id="email_role" placeholder="Role">
-
-  <button onclick="markClientReplied()">
-    Mark Client Replied
-  </button>
 </div>
 
 <script>
 
 const API = "";
 
-function safeText(value) {
-  return String(value || "").replace(/'/g, "\\'");
-}
-
-function openPopup(title, html) {
+function openPopup(title, html){
 
   const win = window.open("", "_blank", "width=900,height=700");
-
-  if (!win) {
-    alert("Popup blocked");
-    return;
-  }
 
   win.document.write(`
     <html>
@@ -132,30 +117,17 @@ function openPopup(title, html) {
       <style>
         body{
           font-family:Arial;
-          padding:20px;
-          background:#0f172a;
+          background:#020617;
           color:white;
+          padding:20px;
         }
 
         .card{
           background:#111827;
-          padding:18px;
-          margin-bottom:15px;
-          border-radius:12px;
           border:1px solid #1e293b;
-          cursor:pointer;
-        }
-
-        .card:hover{
-          border-color:#38bdf8;
-        }
-
-        .tag{
-          display:inline-block;
-          background:#1e293b;
-          padding:4px 10px;
-          border-radius:6px;
-          margin-top:5px;
+          padding:20px;
+          border-radius:12px;
+          margin-bottom:15px;
         }
       </style>
     </head>
@@ -169,85 +141,88 @@ function openPopup(title, html) {
   win.document.close();
 }
 
-function selectClient(name,email,role){
-
-  document.getElementById("email_client_name").value = name || "";
-  document.getElementById("email_to").value = email || "";
-  document.getElementById("email_role").value = role || "";
-
-  alert("Client loaded: " + name);
-}
-
-function importClientsCSV(){
-
-  fetch(API + "/import-clients-csv",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      csv:document.getElementById("csv_clients").value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    alert(data.message + " | Imported: " + data.imported);
-    viewClients();
-  })
-  .catch(err=>{
-    alert("CSV Import Error: " + err);
-  });
-}
-
 function viewClients(){
 
   fetch(API + "/clients")
   .then(res=>res.json())
   .then(data=>{
 
-    let html = "<h2>Clients</h2><p>Click client to load.</p>";
-
-    if(data.length === 0){
-      html += "<p>No clients found.</p>";
-    }
+    let html = "<h2>Clients</h2>";
 
     data.forEach(c=>{
 
-      const name = safeText(c.name);
-      const email = safeText(c.email);
-      const role = safeText(c.role);
+      html += `
+        <div class="card">
+          <b>${c.name}</b><br>
+          Role: ${c.role || "N/A"}<br>
+          Email: ${c.email || "N/A"}<br>
+          Status: ${c.status || "New"}
+        </div>
+      `;
+    });
+
+    openPopup("Clients", html);
+  });
+}
+
+function viewApplicants(){
+
+  fetch(API + "/applicants")
+  .then(res=>res.json())
+  .then(data=>{
+
+    let html = "<h2>Applicants</h2>";
+
+    data.forEach(a=>{
 
       html += `
-        <div class="card"
-          onclick="window.opener.selectClient('${name}','${email}','${role}')">
+        <div class="card">
+          <b>${a.name}</b><br>
+          Role: ${a.role || "N/A"}<br>
+          Email: ${a.email || "N/A"}<br>
+          English: ${a.english || "N/A"}<br>
+          Internet: ${a.internet || "N/A"}<br>
+          Score: ${a.score || 0}
+        </div>
+      `;
+    });
 
-          <b>${c.name}</b><br>
-          Email: ${c.email}<br>
-          Role: ${c.role}<br>
+    openPopup("Applicants", html);
+  });
+}
 
-          <div class="tag">
-            Status: ${c.status || "New"}
-          </div>
+function findMatches(){
 
-          <div class="tag">
-            Follow-up: ${c.followUpStage || 0}
-          </div>
+  fetch(API + "/match")
+  .then(res=>res.json())
+  .then(data=>{
+
+    let html = "<h2>Client + Applicant Matches</h2>";
+
+    data.forEach(m=>{
+
+      html += `
+        <div class="card">
+
+          <b>Client:</b> ${m.client.name}<br>
+          Needed Role: ${m.client.role || "N/A"}<br><br>
 
           ${
-            c.repliedAt
-            ? `<br><small>Replied: ${new Date(c.repliedAt).toLocaleString()}</small>`
-            : ""
+            m.best
+            ? `
+              <b>Best Applicant:</b> ${m.best.name}<br>
+              Role: ${m.best.role || "N/A"}<br>
+              Email: ${m.best.email || "N/A"}<br>
+              Score: ${m.best.score || 0}
+            `
+            : "No matching applicant found"
           }
 
         </div>
       `;
     });
 
-    openPopup("Clients", html);
-
-  })
-  .catch(err=>{
-    alert("Error: " + err);
+    openPopup("Matches", html);
   });
 }
 
@@ -259,103 +234,67 @@ function viewEmails(){
 
     let html = "<h2>Email History</h2>";
 
-    if(data.length === 0){
-      html += "<p>No email history.</p>";
-    }
-
     data.forEach(e=>{
 
       html += `
         <div class="card">
-
           <b>${e.type || "Email"}</b><br>
-
-          Client: ${e.clientName || "N/A"}<br>
           To: ${e.to || "N/A"}<br>
-          Subject: ${e.subject || "N/A"}<br>
-
-          ${
-            e.sentAt
-            ? `Sent: ${new Date(e.sentAt).toLocaleString()}`
-            : ""
-          }
-
+          Subject: ${e.subject || "N/A"}
         </div>
       `;
     });
 
     openPopup("Emails", html);
-
-  })
-  .catch(err=>{
-    alert("Error: " + err);
   });
 }
 
 function runAutoEmails(){
 
-  fetch(API + "/run-auto-emails",{
+  fetch(API + "/run-auto-emails", {
     method:"POST"
   })
   .then(res=>res.json())
   .then(data=>{
-
     alert(data.message + " | Sent: " + data.sent);
-
-    viewEmails();
-
-  })
-  .catch(err=>{
-    alert("Auto Email Error: " + err);
   });
 }
 
 function runTestFollowups(){
 
-  fetch(API + "/test-followups",{
+  fetch(API + "/test-followups", {
     method:"POST"
   })
   .then(res=>res.json())
   .then(data=>{
-
     alert(data.message + " | Sent: " + data.sent);
-
-    viewEmails();
-
-  })
-  .catch(err=>{
-    alert("Follow-up Error: " + err);
   });
 }
 
-function markClientReplied(){
+function importClientsCSV(){
 
-  const email = document.getElementById("email_to").value;
-
-  if(!email){
-    alert("Select client first");
-    return;
-  }
-
-  fetch(API + "/mark-replied",{
+  fetch(API + "/import-clients-csv", {
     method:"POST",
     headers:{
       "Content-Type":"application/json"
     },
     body:JSON.stringify({
-      email
+      csv:document.getElementById("csv_clients").value
     })
   })
   .then(res=>res.json())
   .then(data=>{
+    alert(data.message + " | Imported: " + data.imported);
+  });
+}
 
-    alert(data.message);
+function logout(){
 
-    viewClients();
-
+  fetch(API + "/logout", {
+    method:"POST"
   })
-  .catch(err=>{
-    alert("Mark replied error: " + err);
+  .then(()=>{
+    window.location.href = "/login";
   });
 }
 
