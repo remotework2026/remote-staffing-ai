@@ -2,182 +2,364 @@
 <html>
 <head>
   <title>Remote Staffing AI</title>
-</head>
-<body>
-  <h1>🚀 Remote Staffing Dashboard</h1>
 
-  <h2>CRM</h2>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #38bdf8;
+    }
+
+    button {
+      background: #38bdf8;
+      border: none;
+      color: #02111b;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #111827;
+      color: white;
+    }
+
+    textarea {
+      height: 120px;
+    }
+
+    .section {
+      background: #111827;
+      padding: 25px;
+      border-radius: 18px;
+      margin-bottom: 25px;
+      border: 1px solid #1e293b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+      gap: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚀 Remote Staffing Dashboard</h1>
+
+<div class="section">
+
+  <button onclick="window.open('/landing.html','_blank')">
+    Go to Landing Page
+  </button>
+
   <button onclick="viewClients()">View Clients</button>
   <button onclick="viewEmails()">View Email History</button>
   <button onclick="runAutoEmails()">Run Auto Emails</button>
   <button onclick="runTestFollowups()">Test Follow-Ups</button>
 
-  <hr>
+</div>
 
+<div class="section">
   <h2>📥 Import Clients CSV</h2>
-  <p>Format: name,role,email</p>
-  <textarea id="csv_clients" rows="8" cols="60" placeholder="name,role,email&#10;ABC Store,VA,abc@gmail.com"></textarea><br>
-  <button onclick="importClientsCSV()">Import CSV Clients</button>
 
-  <hr>
+  <p>Format:</p>
 
+  <pre>
+name,role,email
+ABC Store,VA,abc@gmail.com
+  </pre>
+
+  <textarea id="csv_clients"></textarea><br>
+
+  <button onclick="importClientsCSV()">
+    Import CSV Clients
+  </button>
+</div>
+
+<div class="section">
   <h2>📩 Selected Client</h2>
-  <input id="email_to" placeholder="Client Email"><br>
-  <input id="email_client_name" placeholder="Client Name"><br>
-  <input id="email_role" placeholder="Role e.g. VA"><br>
-  <button onclick="markClientReplied()">Mark Client Replied</button>
 
-  <script>
-    const API = "";
+  <input id="email_client_name" placeholder="Client Name">
+  <input id="email_to" placeholder="Client Email">
+  <input id="email_role" placeholder="Role">
 
-    function safeText(value) {
-      return String(value || "").replace(/'/g, "\\'");
+  <button onclick="markClientReplied()">
+    Mark Client Replied
+  </button>
+</div>
+
+<script>
+
+const API = "";
+
+function safeText(value) {
+  return String(value || "").replace(/'/g, "\\'");
+}
+
+function openPopup(title, html) {
+
+  const win = window.open("", "_blank", "width=900,height=700");
+
+  if (!win) {
+    alert("Popup blocked");
+    return;
+  }
+
+  win.document.write(`
+    <html>
+    <head>
+      <title>${title}</title>
+
+      <style>
+        body{
+          font-family:Arial;
+          padding:20px;
+          background:#0f172a;
+          color:white;
+        }
+
+        .card{
+          background:#111827;
+          padding:18px;
+          margin-bottom:15px;
+          border-radius:12px;
+          border:1px solid #1e293b;
+          cursor:pointer;
+        }
+
+        .card:hover{
+          border-color:#38bdf8;
+        }
+
+        .tag{
+          display:inline-block;
+          background:#1e293b;
+          padding:4px 10px;
+          border-radius:6px;
+          margin-top:5px;
+        }
+      </style>
+    </head>
+
+    <body>
+      ${html}
+    </body>
+    </html>
+  `);
+
+  win.document.close();
+}
+
+function selectClient(name,email,role){
+
+  document.getElementById("email_client_name").value = name || "";
+  document.getElementById("email_to").value = email || "";
+  document.getElementById("email_role").value = role || "";
+
+  alert("Client loaded: " + name);
+}
+
+function importClientsCSV(){
+
+  fetch(API + "/import-clients-csv",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      csv:document.getElementById("csv_clients").value
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    alert(data.message + " | Imported: " + data.imported);
+    viewClients();
+  })
+  .catch(err=>{
+    alert("CSV Import Error: " + err);
+  });
+}
+
+function viewClients(){
+
+  fetch(API + "/clients")
+  .then(res=>res.json())
+  .then(data=>{
+
+    let html = "<h2>Clients</h2><p>Click client to load.</p>";
+
+    if(data.length === 0){
+      html += "<p>No clients found.</p>";
     }
 
-    function openPopup(title, html) {
-      const win = window.open("", "_blank", "width=850,height=700");
+    data.forEach(c=>{
 
-      if (!win) {
-        alert("Popup blocked. Please allow popups.");
-        return;
-      }
+      const name = safeText(c.name);
+      const email = safeText(c.email);
+      const role = safeText(c.role);
 
-      win.document.write(`
-        <html>
-        <head>
-          <title>${title}</title>
-          <style>
-            body { font-family: Arial; padding: 20px; background:#f5f5f5; }
-            .card { background:white; padding:15px; margin:10px; border-radius:8px; border:1px solid #ddd; cursor:pointer; }
-            .card:hover { background:#eef6ff; }
-            .tag { display:inline-block; padding:3px 8px; background:#eee; border-radius:5px; margin-top:5px; }
-          </style>
-        </head>
-        <body>${html}</body>
-        </html>
-      `);
+      html += `
+        <div class="card"
+          onclick="window.opener.selectClient('${name}','${email}','${role}')">
 
-      win.document.close();
+          <b>${c.name}</b><br>
+          Email: ${c.email}<br>
+          Role: ${c.role}<br>
+
+          <div class="tag">
+            Status: ${c.status || "New"}
+          </div>
+
+          <div class="tag">
+            Follow-up: ${c.followUpStage || 0}
+          </div>
+
+          ${
+            c.repliedAt
+            ? `<br><small>Replied: ${new Date(c.repliedAt).toLocaleString()}</small>`
+            : ""
+          }
+
+        </div>
+      `;
+    });
+
+    openPopup("Clients", html);
+
+  })
+  .catch(err=>{
+    alert("Error: " + err);
+  });
+}
+
+function viewEmails(){
+
+  fetch(API + "/emails")
+  .then(res=>res.json())
+  .then(data=>{
+
+    let html = "<h2>Email History</h2>";
+
+    if(data.length === 0){
+      html += "<p>No email history.</p>";
     }
 
-    function selectClient(name, email, role) {
-      document.getElementById("email_client_name").value = name || "";
-      document.getElementById("email_to").value = email || "";
-      document.getElementById("email_role").value = role || "";
-      alert("Client loaded: " + name);
-    }
+    data.forEach(e=>{
 
-    function importClientsCSV() {
-      fetch(API + "/import-clients-csv", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          csv: document.getElementById("csv_clients").value
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message + " | Imported: " + data.imported);
-        viewClients();
-      })
-      .catch(err => alert("CSV Import Error: " + err));
-    }
+      html += `
+        <div class="card">
 
-    function viewClients() {
-      fetch(API + "/clients")
-      .then(res => res.json())
-      .then(data => {
-        let html = "<h2>Clients</h2><p>Click a client to load them.</p>";
+          <b>${e.type || "Email"}</b><br>
 
-        if (data.length === 0) html += "<p>No clients saved yet.</p>";
+          Client: ${e.clientName || "N/A"}<br>
+          To: ${e.to || "N/A"}<br>
+          Subject: ${e.subject || "N/A"}<br>
 
-        data.forEach(c => {
-          const name = safeText(c.name);
-          const email = safeText(c.email);
-          const role = safeText(c.role);
+          ${
+            e.sentAt
+            ? `Sent: ${new Date(e.sentAt).toLocaleString()}`
+            : ""
+          }
 
-          html += `
-            <div class="card" onclick="window.opener.selectClient('${name}','${email}','${role}')">
-              <b>${c.name}</b><br>
-              Email: ${c.email || "N/A"}<br>
-              Role: ${c.role || "N/A"}<br>
-              <span class="tag">Status: ${c.status || "New"}</span><br>
-              <span class="tag">Follow-up Stage: ${c.followUpStage || 0}</span><br>
-              ${c.repliedAt ? `<small>Replied: ${new Date(c.repliedAt).toLocaleString()}</small>` : ""}
-            </div>
-          `;
-        });
+        </div>
+      `;
+    });
 
-        openPopup("Clients", html);
-      })
-      .catch(err => alert("Error: " + err));
-    }
+    openPopup("Emails", html);
 
-    function viewEmails() {
-      fetch(API + "/emails")
-      .then(res => res.json())
-      .then(data => {
-        let html = "<h2>Email History</h2>";
+  })
+  .catch(err=>{
+    alert("Error: " + err);
+  });
+}
 
-        if (data.length === 0) html += "<p>No email history yet.</p>";
+function runAutoEmails(){
 
-        data.forEach(e => {
-          html += `
-            <div class="card">
-              <b>${e.type || "Email"}</b><br>
-              Client: ${e.clientName || "N/A"}<br>
-              To: ${e.to || "N/A"}<br>
-              Subject: ${e.subject || "N/A"}<br>
-              Sent: ${e.sentAt ? new Date(e.sentAt).toLocaleString() : "N/A"}
-            </div>
-          `;
-        });
+  fetch(API + "/run-auto-emails",{
+    method:"POST"
+  })
+  .then(res=>res.json())
+  .then(data=>{
 
-        openPopup("Emails", html);
-      })
-      .catch(err => alert("Error: " + err));
-    }
+    alert(data.message + " | Sent: " + data.sent);
 
-    function runAutoEmails() {
-      fetch(API + "/run-auto-emails", { method: "POST" })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message + " | Sent: " + data.sent);
-        viewEmails();
-      })
-      .catch(err => alert("Auto Email Error: " + err));
-    }
+    viewEmails();
 
-    function runTestFollowups() {
-      fetch(API + "/test-followups", { method: "POST" })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message + " | Sent: " + data.sent);
-        viewEmails();
-      })
-      .catch(err => alert("Follow-up Error: " + err));
-    }
+  })
+  .catch(err=>{
+    alert("Auto Email Error: " + err);
+  });
+}
 
-    function markClientReplied() {
-      const email = document.getElementById("email_to").value;
+function runTestFollowups(){
 
-      if (!email) {
-        alert("Select or enter a client email first.");
-        return;
-      }
+  fetch(API + "/test-followups",{
+    method:"POST"
+  })
+  .then(res=>res.json())
+  .then(data=>{
 
-      fetch(API + "/mark-replied", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ email })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message);
-        viewClients();
-      })
-      .catch(err => alert("Mark replied error: " + err));
-    }
-  </script>
+    alert(data.message + " | Sent: " + data.sent);
+
+    viewEmails();
+
+  })
+  .catch(err=>{
+    alert("Follow-up Error: " + err);
+  });
+}
+
+function markClientReplied(){
+
+  const email = document.getElementById("email_to").value;
+
+  if(!email){
+    alert("Select client first");
+    return;
+  }
+
+  fetch(API + "/mark-replied",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+
+    alert(data.message);
+
+    viewClients();
+
+  })
+  .catch(err=>{
+    alert("Mark replied error: " + err);
+  });
+}
+
+</script>
+
 </body>
 </html>
