@@ -16,16 +16,18 @@ app.use(express.urlencoded({ extended: true }));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const FROM_EMAIL = "digitaltrading76@gmail.com"; // CHANGE THIS to your verified SendGrid email
+const FROM_EMAIL = "digitaltrading76@gmail.com"; // CHANGE THIS
 
 const DATA_DIR = path.join(__dirname, 'data');
 const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json');
 const APPLICANTS_FILE = path.join(DATA_DIR, 'applicants.json');
 const EMAILS_FILE = path.join(DATA_DIR, 'emails.json');
+const MATCHES_FILE = path.join(DATA_DIR, 'matches.json');
 const CLIENT_FORM_CSV = path.join(DATA_DIR, 'client_form_submissions.csv');
 const APPLICANT_FORM_CSV = path.join(DATA_DIR, 'applicant_form_submissions.csv');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(MATCHES_FILE)) fs.writeFileSync(MATCHES_FILE, '[]');
 
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
@@ -58,6 +60,22 @@ function scoreApplicant(a) {
   if (a.role) score += 20;
 
   return score;
+}
+
+function rolesMatch(clientRoleRaw, applicantRoleRaw) {
+  const clientRole = String(clientRoleRaw || "").toLowerCase().trim();
+  const applicantRole = String(applicantRoleRaw || "").toLowerCase().trim();
+
+  if (!clientRole || !applicantRole) return false;
+
+  return (
+    clientRole.includes(applicantRole) ||
+    applicantRole.includes(clientRole) ||
+    (clientRole.includes("va") && applicantRole.includes("virtual assistant")) ||
+    (clientRole.includes("virtual assistant") && applicantRole.includes("va")) ||
+    (clientRole.includes("customer support") && applicantRole.includes("support")) ||
+    (clientRole.includes("support") && applicantRole.includes("customer support"))
+  );
 }
 
 /* =====================
@@ -172,10 +190,6 @@ app.get("/login", (req, res) => {
           font-size:16px;
         }
 
-        button:hover{
-          opacity:.9;
-        }
-
         .back{
           display:block;
           text-align:center;
@@ -189,30 +203,14 @@ app.get("/login", (req, res) => {
     <body>
       <form class="login-box" method="POST" action="/login">
         <h1>Secure Dashboard</h1>
-
         <p>Authorized access only</p>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Admin Email"
-          required
-        >
+        <input type="email" name="email" placeholder="Admin Email" required>
+        <input type="password" name="password" placeholder="Password" required>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          required
-        >
+        <button type="submit">Login to Dashboard</button>
 
-        <button type="submit">
-          Login to Dashboard
-        </button>
-
-        <a class="back" href="/landing.html">
-          ← Back to Home
-        </a>
+        <a class="back" href="/landing.html">← Back to Home</a>
       </form>
     </body>
     </html>
@@ -237,39 +235,11 @@ app.post("/login", (req, res) => {
 
   res.send(`
     <html>
-    <body style="
-      background:#020617;
-      color:white;
-      font-family:Arial;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      height:100vh;
-    ">
-      <div style="
-        background:#111827;
-        padding:35px;
-        border-radius:18px;
-        border:1px solid #ef4444;
-        text-align:center;
-      ">
-        <h2 style="color:#ef4444">
-          Invalid Login
-        </h2>
-
-        <p>
-          Wrong email or password.
-        </p>
-
-        <a
-          href="/login"
-          style="
-            color:#38bdf8;
-            text-decoration:none;
-          "
-        >
-          Try Again
-        </a>
+    <body style="background:#020617;color:white;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;">
+      <div style="background:#111827;padding:35px;border-radius:18px;border:1px solid #ef4444;text-align:center;">
+        <h2 style="color:#ef4444">Invalid Login</h2>
+        <p>Wrong email or password.</p>
+        <a href="/login" style="color:#38bdf8;text-decoration:none;">Try Again</a>
       </div>
     </body>
     </html>
@@ -373,6 +343,10 @@ app.get('/emails', requireAuth, (req, res) => {
   res.json(readJSON(EMAILS_FILE));
 });
 
+app.get('/matches-history', requireAuth, (req, res) => {
+  res.json(readJSON(MATCHES_FILE));
+});
+
 app.post('/import-clients-csv', requireAuth, (req, res) => {
   const { csv } = req.body;
   const clients = readJSON(CLIENTS_FILE);
@@ -448,21 +422,8 @@ app.get('/match', requireAuth, (req, res) => {
   const applicants = readJSON(APPLICANTS_FILE);
 
   const matches = clients.map(client => {
-    const clientRole = (client.role || "").toLowerCase();
-
     const best = applicants
-      .filter(a => {
-        const applicantRole = (a.role || "").toLowerCase();
-
-        return (
-          clientRole &&
-          applicantRole &&
-          (
-            clientRole.includes(applicantRole) ||
-            applicantRole.includes(clientRole)
-          )
-        );
-      })
+      .filter(a => rolesMatch(client.role, a.role))
       .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
 
     return {
@@ -495,6 +456,129 @@ async function sendMail(to, subject, text) {
     return false;
   }
 }
+
+/* =====================
+   MATCH NOTIFICATIONS
+===================== */
+
+app.post('/run-match-notifications', requireAuth, async (req, res) => {
+  const clients = readJSON(CLIENTS_FILE);
+  const applicants = readJSON(APPLICANTS_FILE);
+  const matchesHistory = readJSON(MATCHES_FILE);
+
+  let notificationsSent = 0;
+  let skipped = 0;
+
+  for (const client of clients) {
+    if (!client.email) continue;
+
+    const bestApplicant = applicants
+      .filter(a => rolesMatch(client.role, a.role))
+      .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+
+    if (!bestApplicant || !bestApplicant.email) {
+      skipped++;
+      continue;
+    }
+
+    const alreadySent = matchesHistory.some(m =>
+      m.clientEmail === client.email &&
+      m.applicantEmail === bestApplicant.email
+    );
+
+    if (alreadySent) {
+      skipped++;
+      continue;
+    }
+
+    await sendMail(
+      client.email,
+      "Possible Remote Staff Match Found",
+`Hi ${client.name},
+
+We found a possible applicant match for your requested role: ${client.role}
+
+Applicant Name:
+${bestApplicant.name}
+
+Experience:
+${bestApplicant.experience || "N/A"}
+
+Our recruitment team will review this match and contact you shortly.
+
+Best,
+Remote Staff Agency`
+    );
+
+    await sendMail(
+      bestApplicant.email,
+      "Possible VA Job Opportunity Match",
+`Hi ${bestApplicant.name},
+
+A business may be interested in your qualifications for this role:
+
+${bestApplicant.role}
+
+Our recruitment team may contact you soon for additional screening.
+
+Best,
+Remote Staff Agency`
+    );
+
+    if (process.env.NOTIFICATION_EMAIL) {
+      await sendMail(
+        process.env.NOTIFICATION_EMAIL,
+        "New Client + Applicant Match",
+`New staffing match detected.
+
+CLIENT:
+${client.name}
+${client.email}
+
+ROLE NEEDED:
+${client.role}
+
+APPLICANT:
+${bestApplicant.name}
+${bestApplicant.email}
+
+APPLICANT ROLE:
+${bestApplicant.role}
+
+SCORE:
+${bestApplicant.score || 0}
+
+Experience:
+${bestApplicant.experience || "N/A"}`
+      );
+    }
+
+    matchesHistory.push({
+      id: Date.now() + Math.random(),
+      clientEmail: client.email,
+      applicantEmail: bestApplicant.email,
+      clientName: client.name,
+      applicantName: bestApplicant.name,
+      role: client.role,
+      applicantScore: bestApplicant.score || 0,
+      matchedAt: new Date().toISOString()
+    });
+
+    notificationsSent++;
+  }
+
+  saveJSON(MATCHES_FILE, matchesHistory);
+
+  res.json({
+    message: "Match notification scan completed",
+    notificationsSent,
+    skipped
+  });
+});
+
+/* =====================
+   AUTO EMAILS + FOLLOW UPS
+===================== */
 
 async function sendAutoEmails() {
   const clients = readJSON(CLIENTS_FILE);

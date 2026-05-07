@@ -65,6 +65,8 @@
   <button onclick="viewClients()">View Clients</button>
   <button onclick="viewApplicants()">View Applicants</button>
   <button onclick="findMatches()">Match Clients + Applicants</button>
+  <button onclick="runMatchNotifications()">Run Match Notifications</button>
+  <button onclick="viewMatchHistory()">View Match History</button>
   <button onclick="viewEmails()">View Email History</button>
   <button onclick="runAutoEmails()">Run Auto Emails</button>
   <button onclick="runTestFollowups()">Test Follow-Ups</button>
@@ -309,6 +311,70 @@ function findMatches(){
   })
   .catch(err=>{
     alert("Error loading matches. You may need to login again.");
+    console.log(err);
+  });
+}
+
+function viewMatchHistory(){
+
+  fetch(API + "/matches-history", {
+    credentials:"include"
+  })
+  .then(async res=>{
+    if(!res.ok) throw new Error("Failed to load match history");
+    return res.json();
+  })
+  .then(data=>{
+
+    let html = "<h2>Match Notification History</h2>";
+
+    if(data.length === 0){
+      html += "<p>No match notifications sent yet.</p>";
+    }
+
+    data.forEach(m=>{
+
+      html += `
+        <div class="card">
+          <b>Client:</b> ${m.clientName || "N/A"}<br>
+          <b>Client Email:</b> ${m.clientEmail || "N/A"}<br><br>
+
+          <b>Applicant:</b> ${m.applicantName || "N/A"}<br>
+          <b>Applicant Email:</b> ${m.applicantEmail || "N/A"}<br><br>
+
+          <b>Role:</b> ${m.role || "N/A"}<br>
+          <b>Applicant Score:</b> ${m.applicantScore || 0}<br>
+          <b>Matched At:</b> ${m.matchedAt ? new Date(m.matchedAt).toLocaleString() : "N/A"}
+        </div>
+      `;
+    });
+
+    openPopup("Match History", html);
+  })
+  .catch(err=>{
+    alert("Error loading match history.");
+    console.log(err);
+  });
+}
+
+function runMatchNotifications(){
+
+  fetch(API + "/run-match-notifications", {
+    method:"POST",
+    credentials:"include"
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    alert(
+      data.message +
+      " | Notifications Sent: " +
+      data.notificationsSent +
+      " | Skipped: " +
+      data.skipped
+    );
+  })
+  .catch(err=>{
+    alert("Match notification error");
     console.log(err);
   });
 }
