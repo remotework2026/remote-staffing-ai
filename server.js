@@ -13,13 +13,24 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// =====================
+// SENDGRID
+// =====================
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const FROM_EMAIL = "digitaltrading76@gmail.com"; // CHANGE THIS
 
+console.log("SENDGRID_API_KEY loaded:", process.env.SENDGRID_API_KEY ? "YES" : "NO");
+console.log("FROM_EMAIL:", FROM_EMAIL);
+
+// =====================
+// DATA FILES
+// =====================
 const DATA_DIR = path.join(__dirname, 'data');
 const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json');
 const EMAILS_FILE = path.join(DATA_DIR, 'emails.json');
+const CLIENT_FORM_CSV = path.join(DATA_DIR, 'client_form_submissions.csv');
+const APPLICANT_FORM_CSV = path.join(DATA_DIR, 'applicant_form_submissions.csv');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
@@ -34,6 +45,20 @@ function readJSON(file) {
 
 function saveJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+function appendCSV(file, headers, row) {
+  const exists = fs.existsSync(file);
+
+  if (!exists) {
+    fs.writeFileSync(file, headers.join(",") + "\n");
+  }
+
+  const cleanRow = row.map(value =>
+    `"${String(value || "").replace(/"/g, '""')}"`
+  );
+
+  fs.appendFileSync(file, cleanRow.join(",") + "\n");
 }
 
 async function sendMail(to, subject, text) {
@@ -54,10 +79,16 @@ async function sendMail(to, subject, text) {
   }
 }
 
+// =====================
+// BASIC PAGES
+// =====================
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
+// =====================
+// CRM CLIENTS
+// =====================
 app.post('/add-client', (req, res) => {
   const clients = readJSON(CLIENTS_FILE);
   const { name, role, email } = req.body;
@@ -149,6 +180,56 @@ app.post('/mark-replied', (req, res) => {
   });
 });
 
+// =====================
+// LANDING PAGE FORMS
+// =====================
+app.post('/submit-client-form', (req, res) => {
+  const { name, company, email, phone, role, message } = req.body;
+
+  appendCSV(
+    CLIENT_FORM_CSV,
+    ["date", "name", "company", "email", "phone", "needed_role", "message"],
+    [new Date().toISOString(), name, company, email, phone, role, message]
+  );
+
+  const clients = readJSON(CLIENTS_FILE);
+
+  clients.push({
+    id: Date.now() + Math.random(),
+    name: company || name,
+    contactName: name,
+    role,
+    email,
+    phone,
+    message,
+    status: "New",
+    followUpStage: 0,
+    createdAt: new Date().toISOString(),
+    lastEmailAt: null,
+    repliedAt: null,
+    source: "Landing Client Form"
+  });
+
+  saveJSON(CLIENTS_FILE, clients);
+
+  res.json({ message: "Client form saved" });
+});
+
+app.post('/submit-applicant-form', (req, res) => {
+  const { name, email, phone, role, experience, internet, english } = req.body;
+
+  appendCSV(
+    APPLICANT_FORM_CSV,
+    ["date", "name", "email", "phone", "role", "experience", "internet", "english"],
+    [new Date().toISOString(), name, email, phone, role, experience, internet, english]
+  );
+
+  res.json({ message: "Applicant form saved" });
+});
+
+// =====================
+// AUTO EMAILS + FOLLOW UPS
+// =====================
 async function sendAutoEmails() {
   const clients = readJSON(CLIENTS_FILE);
   const emails = readJSON(EMAILS_FILE);
@@ -172,21 +253,21 @@ async function sendAutoEmails() {
 
 Are you currently hiring remote staff?
 
-I help businesses find trained VAs and support agents.
+We help businesses find trained Virtual Assistants, customer support agents, appointment setters, and remote admin staff.
 
 Best,
-Emerson`;
+Remote Staff Agency`;
       type = "Initial Email";
     } else if (client.followUpStage === 1 && days >= 2) {
       subject = "Just following up";
       text = `Hi ${client.name},
 
-Just wanted to follow up on my previous email.
+Just following up on my previous email.
 
 Would you be open to seeing one or two qualified remote candidates?
 
 Best,
-Emerson`;
+Remote Staff Agency`;
       type = "Follow-up 1";
     } else if (client.followUpStage === 2 && days >= 5) {
       subject = "Last follow-up";
@@ -197,7 +278,7 @@ Just checking one last time.
 If you're not looking for remote support right now, no worries at all.
 
 Best,
-Emerson`;
+Remote Staff Agency`;
       type = "Follow-up 2";
     } else {
       continue;
@@ -261,7 +342,7 @@ app.post('/test-followups', async (req, res) => {
 Just following up on my previous email.
 
 Best,
-Emerson`;
+Remote Staff Agency`;
       type = "Follow-up 1";
     } else if (client.followUpStage === 2) {
       subject = "Last follow-up";
@@ -270,7 +351,7 @@ Emerson`;
 Final follow-up.
 
 Best,
-Emerson`;
+Remote Staff Agency`;
       type = "Follow-up 2";
     } else {
       continue;
