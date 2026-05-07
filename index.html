@@ -11,7 +11,7 @@
       padding:20px;
     }
 
-    h1{
+    h1,h2{
       color:#38bdf8;
     }
 
@@ -24,6 +24,10 @@
       margin:5px;
       cursor:pointer;
       font-weight:bold;
+    }
+
+    button:hover{
+      opacity:.9;
     }
 
     .section{
@@ -44,6 +48,10 @@
       color:white;
       margin-top:10px;
     }
+
+    textarea{
+      height:150px;
+    }
   </style>
 </head>
 
@@ -53,37 +61,14 @@
 
 <div class="section">
 
-  <button onclick="window.location.href='/landing.html'">
-    Home
-  </button>
-
-  <button onclick="viewClients()">
-    View Clients
-  </button>
-
-  <button onclick="viewApplicants()">
-    View Applicants
-  </button>
-
-  <button onclick="findMatches()">
-    Match Clients + Applicants
-  </button>
-
-  <button onclick="viewEmails()">
-    View Email History
-  </button>
-
-  <button onclick="runAutoEmails()">
-    Run Auto Emails
-  </button>
-
-  <button onclick="runTestFollowups()">
-    Test Follow-Ups
-  </button>
-
-  <button onclick="logout()">
-    Logout
-  </button>
+  <button onclick="window.location.href='/landing.html'">Home</button>
+  <button onclick="viewClients()">View Clients</button>
+  <button onclick="viewApplicants()">View Applicants</button>
+  <button onclick="findMatches()">Match Clients + Applicants</button>
+  <button onclick="viewEmails()">View Email History</button>
+  <button onclick="runAutoEmails()">Run Auto Emails</button>
+  <button onclick="runTestFollowups()">Test Follow-Ups</button>
+  <button onclick="logout()">Logout</button>
 
 </div>
 
@@ -91,23 +76,29 @@
 
   <h2>Import Clients CSV</h2>
 
-  <textarea id="csv_clients" rows="8"></textarea>
+  <p>Format:</p>
+  <pre>name,role,email
+ABC Store,Virtual Assistant,abc@gmail.com</pre>
+
+  <textarea id="csv_clients"></textarea>
 
   <br>
 
-  <button onclick="importClientsCSV()">
-    Import CSV
-  </button>
+  <button onclick="importClientsCSV()">Import CSV</button>
 
 </div>
 
 <script>
-
 const API = "";
 
 function openPopup(title, html){
 
-  const win = window.open("", "_blank", "width=900,height=700");
+  const win = window.open("", "_blank", "width=950,height=750");
+
+  if(!win){
+    alert("Popup blocked. Please allow popups for this site.");
+    return;
+  }
 
   win.document.write(`
     <html>
@@ -122,12 +113,26 @@ function openPopup(title, html){
           padding:20px;
         }
 
+        h2,h3{
+          color:#38bdf8;
+        }
+
         .card{
           background:#111827;
           border:1px solid #1e293b;
           padding:20px;
           border-radius:12px;
           margin-bottom:15px;
+          line-height:1.6;
+        }
+
+        .tag{
+          display:inline-block;
+          background:#1e293b;
+          padding:5px 10px;
+          border-radius:6px;
+          margin-top:6px;
+          margin-right:5px;
         }
       </style>
     </head>
@@ -143,79 +148,157 @@ function openPopup(title, html){
 
 function viewClients(){
 
-  fetch(API + "/clients")
-  .then(res=>res.json())
+  fetch(API + "/clients", {
+    credentials:"include"
+  })
+  .then(async res=>{
+    if(!res.ok) throw new Error("Failed to load clients");
+    return res.json();
+  })
   .then(data=>{
 
     let html = "<h2>Clients</h2>";
+
+    if(data.length === 0){
+      html += "<p>No clients found.</p>";
+    }
 
     data.forEach(c=>{
 
       html += `
         <div class="card">
-          <b>${c.name}</b><br>
-          Role: ${c.role || "N/A"}<br>
-          Email: ${c.email || "N/A"}<br>
-          Status: ${c.status || "New"}
+          <b>${c.name || "N/A"}</b><br><br>
+
+          <b>Contact Name:</b> ${c.contactName || "N/A"}<br>
+          <b>Needed Role:</b> ${c.role || "N/A"}<br>
+          <b>Email:</b> ${c.email || "N/A"}<br>
+          <b>Phone:</b> ${c.phone || "N/A"}<br>
+          <b>Source:</b> ${c.source || "N/A"}<br><br>
+
+          <span class="tag">Status: ${c.status || "New"}</span>
+          <span class="tag">Follow-up: ${c.followUpStage || 0}</span>
+
+          ${
+            c.message
+            ? `<br><br><b>Message:</b><br>${c.message}`
+            : ""
+          }
         </div>
       `;
     });
 
     openPopup("Clients", html);
+  })
+  .catch(err=>{
+    alert("Error loading clients. You may need to login again.");
+    console.log(err);
   });
 }
 
 function viewApplicants(){
 
-  fetch(API + "/applicants")
-  .then(res=>res.json())
+  fetch(API + "/applicants", {
+    credentials:"include"
+  })
+  .then(async res=>{
+
+    if(!res.ok){
+      throw new Error("Failed to load applicants");
+    }
+
+    return res.json();
+  })
   .then(data=>{
 
     let html = "<h2>Applicants</h2>";
+
+    if(data.length === 0){
+      html += "<p>No applicants found.</p>";
+    }
 
     data.forEach(a=>{
 
       html += `
         <div class="card">
-          <b>${a.name}</b><br>
-          Role: ${a.role || "N/A"}<br>
-          Email: ${a.email || "N/A"}<br>
-          English: ${a.english || "N/A"}<br>
-          Internet: ${a.internet || "N/A"}<br>
-          Score: ${a.score || 0}
+          <b>${a.name || "N/A"}</b><br><br>
+
+          <b>Role:</b> ${a.role || "N/A"}<br>
+          <b>Email:</b> ${a.email || "N/A"}<br>
+          <b>Phone:</b> ${a.phone || "N/A"}<br>
+          <b>English:</b> ${a.english || "N/A"}<br>
+          <b>Internet:</b> ${a.internet || "N/A"}<br>
+          <b>Score:</b> ${a.score || 0}<br>
+          <b>Source:</b> ${a.source || "N/A"}<br><br>
+
+          <b>Experience:</b><br>
+          ${a.experience || "No experience added"}
         </div>
       `;
     });
 
     openPopup("Applicants", html);
+  })
+  .catch(err=>{
+    alert("Error loading applicants. You may need to login again.");
+    console.log(err);
   });
 }
 
 function findMatches(){
 
-  fetch(API + "/match")
-  .then(res=>res.json())
+  fetch(API + "/match", {
+    credentials:"include"
+  })
+  .then(async res=>{
+
+    if(!res.ok){
+      throw new Error("Failed to load matches");
+    }
+
+    return res.json();
+  })
   .then(data=>{
 
     let html = "<h2>Client + Applicant Matches</h2>";
+
+    if(data.length === 0){
+      html += "<p>No clients found yet.</p>";
+    }
 
     data.forEach(m=>{
 
       html += `
         <div class="card">
 
-          <b>Client:</b> ${m.client.name}<br>
-          Needed Role: ${m.client.role || "N/A"}<br><br>
+          <h3>Client</h3>
+
+          <b>Name:</b> ${m.client.name || "N/A"}<br>
+          <b>Needed Role:</b> ${m.client.role || "N/A"}<br>
+          <b>Email:</b> ${m.client.email || "N/A"}<br>
+          <b>Status:</b> ${m.client.status || "New"}<br><br>
+
+          <hr style="margin:15px 0;border-color:#334155">
 
           ${
             m.best
             ? `
-              <b>Best Applicant:</b> ${m.best.name}<br>
-              Role: ${m.best.role || "N/A"}<br>
-              Email: ${m.best.email || "N/A"}<br>
-              Score: ${m.best.score || 0}
+              <h3>Best Applicant Match</h3>
+
+              <b>Name:</b> ${m.best.name || "N/A"}<br>
+              <b>Role:</b> ${m.best.role || "N/A"}<br>
+              <b>Email:</b> ${m.best.email || "N/A"}<br>
+              <b>Phone:</b> ${m.best.phone || "N/A"}<br>
+              <b>English:</b> ${m.best.english || "N/A"}<br>
+              <b>Internet:</b> ${m.best.internet || "N/A"}<br>
+              <b>Score:</b> ${m.best.score || 0}<br><br>
+
+              <b>Experience:</b><br>
+              ${m.best.experience || "No experience added"}
             `
-            : "No matching applicant found"
+            : `
+              <h3>No Applicant Match Found</h3>
+              <p>Tip: Make sure client role and applicant role are similar.</p>
+            `
           }
 
         </div>
@@ -223,51 +306,81 @@ function findMatches(){
     });
 
     openPopup("Matches", html);
+  })
+  .catch(err=>{
+    alert("Error loading matches. You may need to login again.");
+    console.log(err);
   });
 }
 
 function viewEmails(){
 
-  fetch(API + "/emails")
-  .then(res=>res.json())
+  fetch(API + "/emails", {
+    credentials:"include"
+  })
+  .then(async res=>{
+    if(!res.ok) throw new Error("Failed to load emails");
+    return res.json();
+  })
   .then(data=>{
 
     let html = "<h2>Email History</h2>";
+
+    if(data.length === 0){
+      html += "<p>No email history found.</p>";
+    }
 
     data.forEach(e=>{
 
       html += `
         <div class="card">
-          <b>${e.type || "Email"}</b><br>
-          To: ${e.to || "N/A"}<br>
-          Subject: ${e.subject || "N/A"}
+          <b>${e.type || "Email"}</b><br><br>
+
+          <b>Client:</b> ${e.clientName || "N/A"}<br>
+          <b>To:</b> ${e.to || "N/A"}<br>
+          <b>Subject:</b> ${e.subject || "N/A"}<br>
+          <b>Sent:</b> ${e.sentAt ? new Date(e.sentAt).toLocaleString() : "N/A"}
         </div>
       `;
     });
 
     openPopup("Emails", html);
+  })
+  .catch(err=>{
+    alert("Error loading email history. You may need to login again.");
+    console.log(err);
   });
 }
 
 function runAutoEmails(){
 
   fetch(API + "/run-auto-emails", {
-    method:"POST"
+    method:"POST",
+    credentials:"include"
   })
   .then(res=>res.json())
   .then(data=>{
     alert(data.message + " | Sent: " + data.sent);
+  })
+  .catch(err=>{
+    alert("Auto email error.");
+    console.log(err);
   });
 }
 
 function runTestFollowups(){
 
   fetch(API + "/test-followups", {
-    method:"POST"
+    method:"POST",
+    credentials:"include"
   })
   .then(res=>res.json())
   .then(data=>{
     alert(data.message + " | Sent: " + data.sent);
+  })
+  .catch(err=>{
+    alert("Follow-up error.");
+    console.log(err);
   });
 }
 
@@ -275,6 +388,7 @@ function importClientsCSV(){
 
   fetch(API + "/import-clients-csv", {
     method:"POST",
+    credentials:"include",
     headers:{
       "Content-Type":"application/json"
     },
@@ -285,19 +399,23 @@ function importClientsCSV(){
   .then(res=>res.json())
   .then(data=>{
     alert(data.message + " | Imported: " + data.imported);
+  })
+  .catch(err=>{
+    alert("CSV import error.");
+    console.log(err);
   });
 }
 
 function logout(){
 
   fetch(API + "/logout", {
-    method:"POST"
+    method:"POST",
+    credentials:"include"
   })
   .then(()=>{
     window.location.href = "/login";
   });
 }
-
 </script>
 
 </body>
