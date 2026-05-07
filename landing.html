@@ -21,6 +21,8 @@ body{
   overflow-x:hidden;
 }
 
+/* HEADER */
+
 header{
   display:flex;
   justify-content:space-between;
@@ -35,7 +37,7 @@ header{
 }
 
 .logo{
-  font-size:30px;
+  font-size:32px;
   font-weight:bold;
   color:#38bdf8;
 }
@@ -52,6 +54,8 @@ nav a:hover{
   color:#38bdf8;
 }
 
+/* HERO */
+
 .hero{
   min-height:100vh;
   display:grid;
@@ -62,8 +66,8 @@ nav a:hover{
 }
 
 .hero h1{
-  font-size:68px;
-  line-height:1.1;
+  font-size:70px;
+  line-height:1.05;
   margin-bottom:25px;
 }
 
@@ -73,39 +77,30 @@ nav a:hover{
 
 .hero p{
   color:#cbd5e1;
-  font-size:20px;
+  font-size:22px;
+  line-height:1.7;
   margin-bottom:35px;
-  max-width:650px;
 }
 
-.btn{
+.hero-btn{
   display:inline-block;
-  padding:15px 28px;
-  border-radius:12px;
+  padding:16px 28px;
+  background:#38bdf8;
+  color:#020617;
+  border-radius:14px;
   text-decoration:none;
   font-weight:bold;
   transition:0.3s;
-  margin-right:15px;
 }
 
-.primary-btn{
-  background:#38bdf8;
-  color:#020617;
-}
-
-.secondary-btn{
-  border:1px solid #334155;
-  color:white;
-}
-
-.btn:hover{
+.hero-btn:hover{
   transform:translateY(-4px);
 }
 
-.dashboard-preview{
+.hero-card{
   background:linear-gradient(145deg,#111827,#020617);
   border:1px solid #1e293b;
-  border-radius:28px;
+  border-radius:30px;
   padding:35px;
   box-shadow:0 30px 80px rgba(0,0,0,0.4);
 }
@@ -124,17 +119,22 @@ nav a:hover{
   margin-bottom:5px;
 }
 
-section{
-  padding:90px 8%;
+/* TALKING SECTION */
+
+.talking-section{
+  padding:100px 8%;
+  background:linear-gradient(145deg,#0f172a,#020617);
+  border-top:1px solid #1e293b;
+  border-bottom:1px solid #1e293b;
 }
 
 .section-title{
   text-align:center;
-  margin-bottom:55px;
+  margin-bottom:70px;
 }
 
 .section-title h2{
-  font-size:44px;
+  font-size:48px;
   margin-bottom:15px;
 }
 
@@ -144,9 +144,69 @@ section{
   margin:auto;
 }
 
+.chat-container{
+  max-width:1100px;
+  margin:auto;
+}
+
+.chat-row{
+  display:flex;
+  align-items:flex-start;
+  margin-bottom:40px;
+  gap:20px;
+}
+
+.chat-row.right{
+  flex-direction:row-reverse;
+}
+
+.avatar{
+  width:85px;
+  height:85px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:42px;
+  background:#111827;
+  border:2px solid #38bdf8;
+  flex-shrink:0;
+  animation:float 3s ease-in-out infinite;
+}
+
+.chat-box{
+  background:#111827;
+  padding:28px;
+  border-radius:24px;
+  border:1px solid #1e293b;
+  max-width:700px;
+  font-size:20px;
+  line-height:1.8;
+  color:#e2e8f0;
+  box-shadow:0 15px 40px rgba(0,0,0,0.25);
+}
+
+.chat-row.right .chat-box{
+  background:#0f172a;
+  border-color:#38bdf8;
+}
+
+.chat-name{
+  color:#38bdf8;
+  font-weight:bold;
+  margin-bottom:12px;
+  font-size:18px;
+}
+
+/* FEATURES */
+
+.features{
+  padding:100px 8%;
+}
+
 .features-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
   gap:25px;
 }
 
@@ -170,63 +230,33 @@ section{
 
 .feature-card p{
   color:#cbd5e1;
+  line-height:1.7;
 }
 
-.ai-workflow{
-  background:linear-gradient(145deg,#0f172a,#020617);
-  border-top:1px solid #1e293b;
-  border-bottom:1px solid #1e293b;
-}
-
-.ai-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:25px;
-}
-
-.ai-card{
-  background:#111827;
-  padding:28px;
-  border-radius:22px;
-  border:1px solid #1e293b;
-  transition:0.3s;
-  text-align:center;
-}
-
-.ai-card:hover{
-  transform:translateY(-8px);
-  border-color:#38bdf8;
-}
-
-.avatar{
-  font-size:54px;
-  margin-bottom:18px;
-}
-
-.ai-card h3{
-  color:#38bdf8;
-  margin-bottom:12px;
-}
+/* CTA */
 
 .cta{
   margin:40px 8%;
   background:linear-gradient(135deg,#0ea5e9,#2563eb);
   border-radius:32px;
-  padding:70px 40px;
+  padding:80px 40px;
   text-align:center;
 }
 
 .cta h2{
-  font-size:42px;
-  margin-bottom:15px;
+  font-size:46px;
+  margin-bottom:18px;
 }
 
 .cta p{
   max-width:700px;
   margin:auto;
-  margin-bottom:25px;
   color:#dbeafe;
+  font-size:20px;
+  line-height:1.7;
 }
+
+/* FOOTER */
 
 footer{
   text-align:center;
@@ -235,83 +265,7 @@ footer{
   border-top:1px solid #1e293b;
 }
 
-/* AI POPUP */
-
-.ai-popup{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.78);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-  animation:fadeIn 0.5s ease;
-}
-
-.ai-popup-box{
-  width:90%;
-  max-width:700px;
-  background:linear-gradient(145deg,#0f172a,#020617);
-  border:1px solid #38bdf8;
-  border-radius:30px;
-  padding:45px;
-  text-align:center;
-  position:relative;
-  box-shadow:0 25px 80px rgba(0,0,0,0.45);
-}
-
-.ai-popup-box h2{
-  color:#38bdf8;
-  margin-bottom:20px;
-  font-size:40px;
-}
-
-.ai-popup-box p{
-  color:#e2e8f0;
-  font-size:20px;
-  line-height:1.8;
-  min-height:170px;
-}
-
-.ai-avatar-wrap{
-  display:flex;
-  justify-content:center;
-  gap:25px;
-  margin-bottom:25px;
-}
-
-.human-avatar,
-.robot-avatar{
-  width:100px;
-  height:100px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:50px;
-  background:#111827;
-  border:2px solid #38bdf8;
-  animation:float 3s ease-in-out infinite;
-}
-
-.robot-avatar{
-  animation-delay:1s;
-}
-
-.close-btn{
-  position:absolute;
-  top:15px;
-  right:18px;
-  background:none;
-  border:none;
-  color:white;
-  font-size:34px;
-  cursor:pointer;
-}
-
-.popup-buttons{
-  margin-top:30px;
-}
+/* ANIMATION */
 
 @keyframes float{
   0%{transform:translateY(0px)}
@@ -319,10 +273,7 @@ footer{
   100%{transform:translateY(0px)}
 }
 
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
-}
+/* MOBILE */
 
 @media(max-width:900px){
 
@@ -331,23 +282,19 @@ footer{
   }
 
   .hero h1{
-    font-size:44px;
+    font-size:48px;
   }
 
   nav{
     display:none;
   }
 
-  .ai-popup-box{
-    padding:30px 20px;
-  }
-
-  .ai-popup-box h2{
-    font-size:30px;
-  }
-
-  .ai-popup-box p{
+  .chat-box{
     font-size:17px;
+  }
+
+  .section-title h2{
+    font-size:34px;
   }
 }
 
@@ -363,9 +310,8 @@ footer{
   </div>
 
   <nav>
+    <a href="#conversation">AI Conversation</a>
     <a href="#features">Features</a>
-    <a href="#workflow">Workflow</a>
-    <a href="/index.html">Dashboard</a>
   </nav>
 
 </header>
@@ -379,34 +325,30 @@ footer{
     </h1>
 
     <p>
-      Automate outreach, follow-ups, lead management, and staffing operations while connecting businesses with trained remote workers worldwide.
+      Automate outreach, staffing workflows, follow-ups, and remote hiring while connecting businesses with trained virtual assistants worldwide.
     </p>
 
-    <a href="/index.html" class="btn primary-btn">
-      Open Dashboard
-    </a>
-
-    <a href="#features" class="btn secondary-btn">
-      Explore Features
+    <a href="#conversation" class="hero-btn">
+      See How It Works
     </a>
 
   </div>
 
-  <div class="dashboard-preview">
+  <div class="hero-card">
 
     <div class="metric">
       <h3>24/7</h3>
-      <p>Automated staffing workflows</p>
+      <p>Automated staffing workflow</p>
     </div>
 
     <div class="metric">
       <h3>AI CRM</h3>
-      <p>Track clients and replies automatically</p>
+      <p>Lead tracking and outreach automation</p>
     </div>
 
     <div class="metric">
       <h3>Global Talent</h3>
-      <p>Hire remote VAs and support agents worldwide</p>
+      <p>Remote VAs and support staff worldwide</p>
     </div>
 
     <div class="metric">
@@ -418,14 +360,146 @@ footer{
 
 </section>
 
-<section id="features">
+<section class="talking-section" id="conversation">
 
   <div class="section-title">
-    <h2>Modern Staffing Features</h2>
+
+    <h2>
+      Human + AI Staffing Conversation
+    </h2>
 
     <p>
-      Everything needed to automate and scale a remote staffing agency.
+      Combining intelligent automation with real human recruiting expertise.
     </p>
+
+  </div>
+
+  <div class="chat-container">
+
+    <div class="chat-row">
+
+      <div class="avatar">
+        👨‍💼
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          Human Recruiter
+        </div>
+
+        Many businesses struggle with repetitive tasks, customer support, scheduling, lead generation, and admin work. Hiring full local teams can become expensive and difficult to manage.
+
+      </div>
+
+    </div>
+
+    <div class="chat-row right">
+
+      <div class="avatar">
+        🤖
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          AI Staffing Assistant
+        </div>
+
+        That’s where Virtual Assistants can help. Businesses can reduce operational costs while increasing productivity using trained remote workers.
+
+      </div>
+
+    </div>
+
+    <div class="chat-row">
+
+      <div class="avatar">
+        👨‍💼
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          Human Recruiter
+        </div>
+
+        We help companies hire remote customer support agents, appointment setters, social media assistants, admin staff, and executive virtual assistants worldwide.
+
+      </div>
+
+    </div>
+
+    <div class="chat-row right">
+
+      <div class="avatar">
+        🤖
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          AI Staffing Assistant
+        </div>
+
+        Our AI-powered system automates lead management, follow-ups, staffing workflows, and recruitment operations while human recruiters ensure quality hiring.
+
+      </div>
+
+    </div>
+
+    <div class="chat-row">
+
+      <div class="avatar">
+        👨‍💼
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          Human Recruiter
+        </div>
+
+        Businesses can save time, improve customer response times, scale faster, and focus more on growth while remote teams handle day-to-day operations.
+
+      </div>
+
+    </div>
+
+    <div class="chat-row right">
+
+      <div class="avatar">
+        🤖
+      </div>
+
+      <div class="chat-box">
+
+        <div class="chat-name">
+          AI Staffing Assistant
+        </div>
+
+        RemoteStaff AI combines automation and human expertise to create a smarter and more scalable staffing solution for modern businesses.
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section class="features" id="features">
+
+  <div class="section-title">
+
+    <h2>
+      Platform Features
+    </h2>
+
+    <p>
+      Everything needed to run a modern AI-powered staffing operation.
+    </p>
+
   </div>
 
   <div class="features-grid">
@@ -440,101 +514,35 @@ footer{
     <div class="feature-card">
       <h3>Email Outreach</h3>
       <p>
-        Send AI-powered cold outreach campaigns instantly.
+        Send automated outreach campaigns using AI workflows.
       </p>
     </div>
 
     <div class="feature-card">
       <h3>Follow-Up Automation</h3>
       <p>
-        AI tracks and sends follow-ups automatically.
-      </p>
-    </div>
-
-    <div class="feature-card">
-      <h3>Client CRM</h3>
-      <p>
-        Manage staffing pipelines and client responses.
+        AI tracks replies and stops follow-ups automatically.
       </p>
     </div>
 
     <div class="feature-card">
       <h3>Remote Hiring</h3>
       <p>
-        Match businesses with qualified virtual assistants.
+        Match businesses with qualified remote workers globally.
       </p>
     </div>
 
     <div class="feature-card">
-      <h3>AI Workflow</h3>
+      <h3>AI CRM</h3>
       <p>
-        Combine automation with real human recruiters.
+        Manage staffing pipelines and recruitment workflows.
       </p>
     </div>
 
-  </div>
-
-</section>
-
-<section class="ai-workflow" id="workflow">
-
-  <div class="section-title">
-
-    <h2>🤝 Human + AI Staffing Workflow</h2>
-
-    <p>
-      Combining AI automation with real staffing expertise.
-    </p>
-
-  </div>
-
-  <div class="ai-grid">
-
-    <div class="ai-card">
-      <div class="avatar">🤖</div>
-      <h3>AI Finds Leads</h3>
+    <div class="feature-card">
+      <h3>Cloud Platform</h3>
       <p>
-        AI organizes and imports business leads automatically.
-      </p>
-    </div>
-
-    <div class="ai-card">
-      <div class="avatar">👨‍💼</div>
-      <h3>Human Reviews Clients</h3>
-      <p>
-        Recruiters verify client staffing needs before outreach.
-      </p>
-    </div>
-
-    <div class="ai-card">
-      <div class="avatar">📩</div>
-      <h3>Automated Outreach</h3>
-      <p>
-        Personalized outreach and follow-ups are automated.
-      </p>
-    </div>
-
-    <div class="ai-card">
-      <div class="avatar">🧠</div>
-      <h3>AI Follow-Ups</h3>
-      <p>
-        Follow-ups stop automatically once clients reply.
-      </p>
-    </div>
-
-    <div class="ai-card">
-      <div class="avatar">🌍</div>
-      <h3>Global Remote Talent</h3>
-      <p>
-        Match businesses with trained remote workers worldwide.
-      </p>
-    </div>
-
-    <div class="ai-card">
-      <div class="avatar">🚀</div>
-      <h3>Scale Faster</h3>
-      <p>
-        Help businesses grow using AI staffing operations.
+        Access your staffing system anywhere online.
       </p>
     </div>
 
@@ -545,107 +553,18 @@ footer{
 <div class="cta">
 
   <h2>
-    Start Building Your Remote Team Today
+    Build Your Remote Team Faster
   </h2>
 
   <p>
-    Launch your AI-powered staffing workflow and automate recruitment operations.
+    Scale your business using AI-powered staffing workflows and trained remote professionals worldwide.
   </p>
-
-  <a href="/index.html" class="btn primary-btn">
-    Launch Dashboard
-  </a>
 
 </div>
 
 <footer>
   © 2026 RemoteStaff AI • AI Staffing Automation
 </footer>
-
-<!-- AI WELCOME POPUP -->
-
-<div id="aiPopup" class="ai-popup">
-
-  <div class="ai-popup-box">
-
-    <button class="close-btn" onclick="closeAIPopup()">
-      ×
-    </button>
-
-    <div class="ai-avatar-wrap">
-
-      <div class="human-avatar">
-        👨‍💼
-      </div>
-
-      <div class="robot-avatar">
-        🤖
-      </div>
-
-    </div>
-
-    <h2>
-      Welcome to RemoteStaff AI
-    </h2>
-
-    <p id="typingText"></p>
-
-    <div class="popup-buttons">
-
-      <a href="/index.html" class="btn primary-btn">
-        Open Dashboard
-      </a>
-
-      <a href="#features" class="btn secondary-btn">
-        Learn More
-      </a>
-
-    </div>
-
-  </div>
-
-</div>
-
-<script>
-
-const message = `
-
-Hello and welcome to RemoteStaff AI.
-
-We help businesses save time and reduce costs by hiring trained Virtual Assistants, customer support agents, appointment setters, and remote staff worldwide.
-
-Our AI-powered staffing platform automates outreach, follow-ups, and recruitment workflows while real human recruiters ensure quality hiring.
-
-Hiring a VA helps businesses scale faster, lower operational costs, improve customer support, and focus on business growth.
-
-`;
-
-let index = 0;
-
-function typeMessage(){
-
-  if(index < message.length){
-
-    document.getElementById("typingText").innerHTML += message.charAt(index);
-
-    index++;
-
-    setTimeout(typeMessage,25);
-  }
-}
-
-window.onload = () => {
-
-  setTimeout(typeMessage,500);
-
-};
-
-function closeAIPopup(){
-
-  document.getElementById("aiPopup").style.display = "none";
-}
-
-</script>
 
 </body>
 </html>
