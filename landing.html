@@ -2,340 +2,518 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Remote Staffing AI Agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RemoteStaff AI</title>
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial,sans-serif;
     }
 
-    body {
-      background: #0f172a;
-      color: white;
-      line-height: 1.6;
+    body{
+      background:#020617;
+      color:white;
+      overflow-x:hidden;
     }
 
-    header {
-      padding: 25px 8%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:25px 8%;
+      position:sticky;
+      top:0;
+      background:rgba(2,6,23,0.95);
+      backdrop-filter:blur(10px);
+      z-index:100;
+      border-bottom:1px solid #1e293b;
     }
 
-    .logo {
-      font-size: 24px;
-      font-weight: bold;
-      color: #38bdf8;
+    .logo{
+      font-size:26px;
+      font-weight:bold;
+      color:#38bdf8;
     }
 
-    nav a {
-      color: white;
-      margin-left: 25px;
-      text-decoration: none;
-      opacity: 0.85;
+    nav a{
+      color:white;
+      text-decoration:none;
+      margin-left:25px;
+      opacity:0.85;
     }
 
-    .hero {
-      padding: 90px 8%;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 50px;
-      align-items: center;
+    nav a:hover{
+      color:#38bdf8;
     }
 
-    .hero h1 {
-      font-size: 56px;
-      line-height: 1.1;
-      margin-bottom: 25px;
+    .hero{
+      min-height:90vh;
+      display:grid;
+      grid-template-columns:1.1fr 0.9fr;
+      align-items:center;
+      padding:80px 8%;
+      gap:60px;
     }
 
-    .hero span {
-      color: #38bdf8;
+    .hero h1{
+      font-size:64px;
+      line-height:1.1;
+      margin-bottom:25px;
     }
 
-    .hero p {
-      font-size: 19px;
-      color: #cbd5e1;
-      margin-bottom: 30px;
+    .hero span{
+      color:#38bdf8;
     }
 
-    .btn {
-      display: inline-block;
-      background: #38bdf8;
-      color: #020617;
-      padding: 14px 26px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: bold;
-      margin-right: 12px;
+    .hero p{
+      color:#cbd5e1;
+      font-size:20px;
+      margin-bottom:30px;
+      max-width:650px;
     }
 
-    .btn.secondary {
-      background: transparent;
-      color: white;
-      border: 1px solid #334155;
+    .btn{
+      display:inline-block;
+      padding:15px 28px;
+      border-radius:12px;
+      text-decoration:none;
+      font-weight:bold;
+      margin-right:15px;
+      transition:0.3s;
     }
 
-    .panel {
-      background: linear-gradient(145deg, #1e293b, #020617);
-      padding: 30px;
-      border-radius: 24px;
-      border: 1px solid #334155;
-      box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+    .btn.primary{
+      background:#38bdf8;
+      color:#020617;
     }
 
-    .metric {
-      background: #020617;
-      padding: 18px;
-      border-radius: 16px;
-      margin-bottom: 15px;
-      border: 1px solid #1e293b;
+    .btn.secondary{
+      border:1px solid #334155;
+      color:white;
     }
 
-    .metric strong {
-      color: #38bdf8;
-      font-size: 26px;
+    .btn:hover{
+      transform:translateY(-3px);
     }
 
-    section {
-      padding: 70px 8%;
+    .hero-card{
+      background:linear-gradient(145deg,#111827,#020617);
+      border:1px solid #1e293b;
+      border-radius:28px;
+      padding:35px;
+      box-shadow:0 30px 80px rgba(0,0,0,0.35);
     }
 
-    .section-title {
-      text-align: center;
-      margin-bottom: 45px;
+    .metric{
+      background:#020617;
+      padding:20px;
+      border-radius:18px;
+      margin-bottom:15px;
+      border:1px solid #1e293b;
     }
 
-    .section-title h2 {
-      font-size: 38px;
-      margin-bottom: 12px;
+    .metric h3{
+      color:#38bdf8;
+      font-size:32px;
+      margin-bottom:5px;
     }
 
-    .section-title p {
-      color: #94a3b8;
+    section{
+      padding:90px 8%;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 25px;
+    .section-title{
+      text-align:center;
+      margin-bottom:50px;
     }
 
-    .card {
-      background: #111827;
-      padding: 28px;
-      border-radius: 20px;
-      border: 1px solid #1f2937;
-      transition: 0.3s;
+    .section-title h2{
+      font-size:42px;
+      margin-bottom:15px;
     }
 
-    .card:hover {
-      transform: translateY(-6px);
-      border-color: #38bdf8;
+    .section-title p{
+      color:#94a3b8;
+      max-width:700px;
+      margin:auto;
     }
 
-    .card h3 {
-      color: #38bdf8;
-      margin-bottom: 12px;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:25px;
     }
 
-    .card p {
-      color: #cbd5e1;
+    .card{
+      background:#111827;
+      padding:30px;
+      border-radius:22px;
+      border:1px solid #1e293b;
+      transition:0.3s;
     }
 
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+    .card:hover{
+      transform:translateY(-8px);
+      border-color:#38bdf8;
     }
 
-    .step {
-      background: #020617;
-      padding: 24px;
-      border-radius: 18px;
-      border: 1px solid #1e293b;
+    .card h3{
+      color:#38bdf8;
+      margin-bottom:15px;
     }
 
-    .step .num {
-      color: #38bdf8;
-      font-size: 30px;
-      font-weight: bold;
+    .card p{
+      color:#cbd5e1;
     }
 
-    .cta {
-      text-align: center;
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
-      border-radius: 30px;
-      padding: 60px 30px;
-      margin: 40px 8%;
+    .workflow{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
     }
 
-    .cta h2 {
-      font-size: 38px;
-      margin-bottom: 15px;
+    .step{
+      background:#111827;
+      padding:25px;
+      border-radius:20px;
+      border:1px solid #1e293b;
     }
 
-    .cta p {
-      max-width: 650px;
-      margin: 0 auto 25px;
-      color: #e0f2fe;
+    .step .num{
+      font-size:36px;
+      color:#38bdf8;
+      font-weight:bold;
+      margin-bottom:15px;
     }
 
-    footer {
-      text-align: center;
-      padding: 30px;
-      color: #94a3b8;
-      border-top: 1px solid #1e293b;
+    .ai-section{
+      background:linear-gradient(145deg,#0f172a,#020617);
+      border-top:1px solid #1e293b;
+      border-bottom:1px solid #1e293b;
     }
 
-    @media (max-width: 900px) {
-      .hero {
-        grid-template-columns: 1fr;
+    .ai-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:25px;
+    }
+
+    .ai-card{
+      background:#111827;
+      padding:28px;
+      border-radius:22px;
+      border:1px solid #1e293b;
+      transition:0.3s;
+      text-align:center;
+    }
+
+    .ai-card:hover{
+      transform:translateY(-8px);
+      border-color:#38bdf8;
+    }
+
+    .avatar{
+      font-size:52px;
+      margin-bottom:18px;
+    }
+
+    .ai-card h3{
+      color:#38bdf8;
+      margin-bottom:12px;
+    }
+
+    .cta{
+      background:linear-gradient(135deg,#0ea5e9,#2563eb);
+      border-radius:32px;
+      padding:70px 40px;
+      text-align:center;
+      margin:40px 8%;
+    }
+
+    .cta h2{
+      font-size:42px;
+      margin-bottom:18px;
+    }
+
+    .cta p{
+      max-width:700px;
+      margin:auto;
+      margin-bottom:25px;
+      color:#dbeafe;
+    }
+
+    footer{
+      text-align:center;
+      padding:35px;
+      color:#94a3b8;
+      border-top:1px solid #1e293b;
+    }
+
+    @media(max-width:900px){
+
+      .hero{
+        grid-template-columns:1fr;
       }
 
-      .hero h1 {
-        font-size: 40px;
+      .hero h1{
+        font-size:44px;
       }
 
-      .grid,
-      .steps {
-        grid-template-columns: 1fr;
-      }
-
-      nav {
-        display: none;
+      nav{
+        display:none;
       }
     }
+
   </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">RemoteStaff AI</div>
+
+  <div class="logo">
+    RemoteStaff AI
+  </div>
+
   <nav>
     <a href="#features">Features</a>
     <a href="#workflow">Workflow</a>
-    <a href="#contact">Start</a>
+    <a href="#ai">AI Staffing</a>
+    <a href="/index.html">Dashboard</a>
   </nav>
+
 </header>
 
 <section class="hero">
+
   <div>
-    <h1>Automate your <span>remote staffing agency</span> from lead to placement.</h1>
+
+    <h1>
+      AI-Powered <span>Remote Staffing</span> System
+    </h1>
+
     <p>
-      Find clients, import leads, send outreach, track follow-ups, and manage remote workers using one simple AI-powered staffing system.
+      Automate client outreach, follow-ups, remote worker matching, and staffing workflows using one modern AI recruitment platform.
     </p>
-    <a href="index.html" class="btn">Open Dashboard</a>
-    <a href="#features" class="btn secondary">See Features</a>
+
+    <a href="/index.html" class="btn primary">
+      Open Dashboard
+    </a>
+
+    <a href="#features" class="btn secondary">
+      Explore Features
+    </a>
+
   </div>
 
-  <div class="panel">
+  <div class="hero-card">
+
     <div class="metric">
-      <p>New Clients Imported</p>
-      <strong>128+</strong>
+      <h3>24/7</h3>
+      <p>Automated outreach and follow-up engine</p>
     </div>
+
     <div class="metric">
-      <p>Automated Emails Sent</p>
-      <strong>24/7</strong>
+      <h3>AI CRM</h3>
+      <p>Track leads, replies, and staffing pipelines</p>
     </div>
+
     <div class="metric">
-      <p>Follow-up Automation</p>
-      <strong>Active</strong>
+      <h3>Remote Ready</h3>
+      <p>Manage applicants and staffing globally</p>
     </div>
+
     <div class="metric">
-      <p>Remote Applicant Matching</p>
-      <strong>AI Ready</strong>
+      <h3>Cloud Hosted</h3>
+      <p>Accessible anywhere using Render deployment</p>
     </div>
+
   </div>
+
 </section>
 
 <section id="features">
+
   <div class="section-title">
-    <h2>Built for Remote Staffing</h2>
-    <p>Everything you need to manage client acquisition and remote worker placement.</p>
+    <h2>Everything Needed For Modern Staffing</h2>
+    <p>
+      Built to automate lead generation, outreach, follow-ups, and remote recruitment.
+    </p>
   </div>
 
   <div class="grid">
+
     <div class="card">
-      <h3>Client CRM</h3>
-      <p>Store leads, track status, mark replies, and manage every client in one place.</p>
+      <h3>Lead Import</h3>
+      <p>
+        Import client leads instantly using CSV and organize them automatically.
+      </p>
     </div>
 
     <div class="card">
-      <h3>CSV Lead Import</h3>
-      <p>Import leads from Google Sheets, Apollo, LinkedIn exports, or manual research.</p>
+      <h3>Email Automation</h3>
+      <p>
+        Send outreach campaigns and follow-ups automatically using SendGrid.
+      </p>
     </div>
 
     <div class="card">
-      <h3>Auto Email Sender</h3>
-      <p>Send outreach automatically using SendGrid with email history tracking.</p>
-    </div>
-
-    <div class="card">
-      <h3>Follow-up Automation</h3>
-      <p>Send follow-ups automatically and stop when a client is marked as replied.</p>
+      <h3>Follow-Up System</h3>
+      <p>
+        AI tracks follow-up stages and stops outreach after client replies.
+      </p>
     </div>
 
     <div class="card">
       <h3>Remote Worker Matching</h3>
-      <p>Match clients with remote-ready applicants based on role, skill, and availability.</p>
+      <p>
+        Match clients with trained VAs and support agents.
+      </p>
     </div>
 
     <div class="card">
-      <h3>24/7 Cloud Ready</h3>
-      <p>Deploy online with Render so your system keeps running even when your laptop is off.</p>
+      <h3>Cloud CRM</h3>
+      <p>
+        Access your staffing dashboard from anywhere online.
+      </p>
     </div>
+
+    <div class="card">
+      <h3>AI Workflow</h3>
+      <p>
+        Combine automation with real human recruitment decisions.
+      </p>
+    </div>
+
   </div>
+
 </section>
 
 <section id="workflow">
+
   <div class="section-title">
-    <h2>How It Works</h2>
-    <p>A simple workflow designed for real staffing operations.</p>
+    <h2>Simple Staffing Workflow</h2>
+    <p>
+      A complete process from client outreach to remote worker placement.
+    </p>
   </div>
 
-  <div class="steps">
+  <div class="workflow">
+
     <div class="step">
       <div class="num">01</div>
       <h3>Import Leads</h3>
-      <p>Paste client CSV data into the dashboard.</p>
+      <p>Upload business leads into the CRM.</p>
     </div>
 
     <div class="step">
       <div class="num">02</div>
       <h3>Run Outreach</h3>
-      <p>Send automated emails to new clients.</p>
+      <p>Send AI-powered cold emails automatically.</p>
     </div>
 
     <div class="step">
       <div class="num">03</div>
-      <h3>Follow Up</h3>
-      <p>Trigger follow-ups or automate them by schedule.</p>
+      <h3>Track Replies</h3>
+      <p>Mark replied clients and stop follow-ups.</p>
     </div>
 
     <div class="step">
       <div class="num">04</div>
-      <h3>Place Workers</h3>
-      <p>Connect interested clients with remote applicants.</p>
+      <h3>Place Talent</h3>
+      <p>Connect businesses with trained remote workers.</p>
     </div>
+
   </div>
+
 </section>
 
-<div class="cta" id="contact">
-  <h2>Start building your remote staffing pipeline today.</h2>
+<section class="ai-section" id="ai">
+
+  <div class="section-title">
+    <h2>🤝 Human + AI Recruitment Workflow</h2>
+
+    <p>
+      Combining intelligent automation with real staffing expertise.
+    </p>
+  </div>
+
+  <div class="ai-grid">
+
+    <div class="ai-card">
+      <div class="avatar">🤖</div>
+      <h3>AI Finds Leads</h3>
+      <p>
+        AI organizes and imports potential business clients automatically.
+      </p>
+    </div>
+
+    <div class="ai-card">
+      <div class="avatar">👨‍💼</div>
+      <h3>Human Reviews Clients</h3>
+      <p>
+        Recruiters verify business needs before staffing outreach.
+      </p>
+    </div>
+
+    <div class="ai-card">
+      <div class="avatar">📩</div>
+      <h3>Automated Outreach</h3>
+      <p>
+        Personalized outreach and follow-ups are sent automatically.
+      </p>
+    </div>
+
+    <div class="ai-card">
+      <div class="avatar">🧠</div>
+      <h3>AI Follow-Ups</h3>
+      <p>
+        Follow-ups stop automatically once a client replies.
+      </p>
+    </div>
+
+    <div class="ai-card">
+      <div class="avatar">🌍</div>
+      <h3>Global Remote Talent</h3>
+      <p>
+        Match businesses with qualified remote workers worldwide.
+      </p>
+    </div>
+
+    <div class="ai-card">
+      <div class="avatar">🚀</div>
+      <h3>Scale Faster</h3>
+      <p>
+        Help businesses grow faster using AI-powered staffing operations.
+      </p>
+    </div>
+
+  </div>
+
+</section>
+
+<div class="cta">
+
+  <h2>
+    Launch Your Remote Staffing Operation
+  </h2>
+
   <p>
-    Open your dashboard, import leads, run outreach, and begin turning prospects into clients.
+    Start importing leads, running outreach campaigns, and automating recruitment workflows today.
   </p>
-  <a href="index.html" class="btn">Launch Dashboard</a>
+
+  <a href="/index.html" class="btn primary">
+    Open Dashboard
+  </a>
+
 </div>
 
 <footer>
-  © 2026 RemoteStaff AI. Built for remote staffing agencies.
+  © 2026 RemoteStaff AI • AI-Powered Staffing Automation
 </footer>
 
 </body>
