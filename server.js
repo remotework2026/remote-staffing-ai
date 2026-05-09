@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const sgMail = require('@sendgrid/mail');
+const { google } = require('googleapis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const FROM_EMAIL = "digitaltrading76@gmail.com"; // CHANGE THIS
+const FROM_EMAIL = "digitaltrading76@gmail.com"; // CHANGE THIS to your verified SendGrid email
 
 const DATA_DIR = path.join(__dirname, 'data');
 const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json');
@@ -29,8 +30,73 @@ const APPLICANT_FORM_CSV = path.join(DATA_DIR, 'applicant_form_submissions.csv')
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 if (!fs.existsSync(MATCHES_FILE)) fs.writeFileSync(MATCHES_FILE, '[]');
 
+/* =====================
+   GOOGLE SHEETS SETUP
+===================== */
+
+const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+
+let sheets = null;
+
+try {
+  if (
+    process.env.GOOGLE_CLIENT_EMAIL &&
+    process.env.GOOGLE_PRIVATE_KEY &&
+    process.env.GOOGLE_SHEET_ID
+  ) {
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    sheets = google.sheets({
+      version: 'v4',
+      auth,
+    });
+
+    console.log("Google Sheets connected: YES");
+  } else {
+    console.log("Google Sheets connected: NO - missing environment variables");
+  }
+} catch (err) {
+  console.log("Google Sheets setup error:", err.message);
+}
+
+async function appendToGoogleSheet(tabName, values) {
+  if (!sheets || !SHEET_ID) {
+    console.log("Google Sheets skipped: not configured");
+    return;
+  }
+
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: `${tabName}!A:Z`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [values],
+      },
+    });
+
+    console.log(`Saved to Google Sheet: ${tabName}`);
+  } catch (err) {
+    console.log(
+      `Google Sheets save error for ${tabName}:`,
+      err.response?.data || err.message
+    );
+  }
+}
+
+/* =====================
+   FILE HELPERS
+===================== */
+
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
+
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
@@ -265,7 +331,7 @@ app.get("/index.html", requireAuth, (req, res) => {
    LANDING PAGE FORMS
 ===================== */
 
-app.post('/submit-client-form', (req, res) => {
+app.post('/submit-client-form', async (req, res) => {
   const { name, company, email, phone, role, message } = req.body;
 
   appendCSV(
@@ -276,7 +342,7 @@ app.post('/submit-client-form', (req, res) => {
 
   const clients = readJSON(CLIENTS_FILE);
 
-  clients.push({
+  const client = {
     id: Date.now() + Math.random(),
     name: company || name,
     contactName: name,
@@ -290,14 +356,27 @@ app.post('/submit-client-form', (req, res) => {
     lastEmailAt: null,
     repliedAt: null,
     source: "Landing Client Form"
-  });
+  };
 
+  clients.push(client);
   saveJSON(CLIENTS_FILE, clients);
+
+  await appendToGoogleSheet("Clients", [
+    new Date().toLocaleString(),
+    client.name,
+    client.contactName,
+    client.email,
+    client.phone,
+    client.role,
+    client.message,
+    client.status,
+    client.source
+  ]);
 
   res.json({ message: "Client form saved" });
 });
 
-app.post('/submit-applicant-form', (req, res) => {
+app.post('/submit-applicant-form', async (req, res) => {
   const { name, email, phone, role, experience, internet, english } = req.body;
 
   appendCSV(
@@ -308,7 +387,7 @@ app.post('/submit-applicant-form', (req, res) => {
 
   const applicants = readJSON(APPLICANTS_FILE);
 
-  applicants.push({
+  const applicant = {
     id: Date.now() + Math.random(),
     name,
     email,
@@ -320,9 +399,23 @@ app.post('/submit-applicant-form', (req, res) => {
     score: scoreApplicant({ role, experience, internet, english }),
     createdAt: new Date().toISOString(),
     source: "Landing Applicant Form"
-  });
+  };
 
+  applicants.push(applicant);
   saveJSON(APPLICANTS_FILE, applicants);
+
+  await appendToGoogleSheet("Applicants", [
+    new Date().toLocaleString(),
+    applicant.name,
+    applicant.email,
+    applicant.phone,
+    applicant.role,
+    applicant.experience,
+    applicant.internet,
+    applicant.english,
+    applicant.score,
+    applicant.source
+  ]);
 
   res.json({ message: "Applicant form saved" });
 });
@@ -347,7 +440,7 @@ app.get('/matches-history', requireAuth, (req, res) => {
   res.json(readJSON(MATCHES_FILE));
 });
 
-app.post('/import-clients-csv', requireAuth, (req, res) => {
+app.post('/import-clients-csv', requireAuth, async (req, res) => {
   const { csv } = req.body;
   const clients = readJSON(CLIENTS_FILE);
 
@@ -356,14 +449,14 @@ app.post('/import-clients-csv', requireAuth, (req, res) => {
   const lines = csv.trim().split("\n");
   let imported = 0;
 
-  lines.slice(1).forEach(line => {
+  for (const line of lines.slice(1)) {
     const [name, role, email] = line.split(",").map(x => x.trim());
 
     if (name && role && email) {
       const exists = clients.some(c => c.email && c.email.toLowerCase() === email.toLowerCase());
 
       if (!exists) {
-        clients.push({
+        const client = {
           id: Date.now() + Math.random(),
           name,
           role,
@@ -374,12 +467,26 @@ app.post('/import-clients-csv', requireAuth, (req, res) => {
           lastEmailAt: null,
           repliedAt: null,
           source: "Dashboard CSV"
-        });
+        };
+
+        clients.push(client);
+
+        await appendToGoogleSheet("Clients", [
+          new Date().toLocaleString(),
+          client.name,
+          "",
+          client.email,
+          "",
+          client.role,
+          "",
+          client.status,
+          client.source
+        ]);
 
         imported++;
       }
     }
-  });
+  }
 
   saveJSON(CLIENTS_FILE, clients);
 
@@ -553,16 +660,30 @@ ${bestApplicant.experience || "N/A"}`
       );
     }
 
-    matchesHistory.push({
+    const matchRecord = {
       id: Date.now() + Math.random(),
       clientEmail: client.email,
       applicantEmail: bestApplicant.email,
       clientName: client.name,
       applicantName: bestApplicant.name,
       role: client.role,
+      applicantRole: bestApplicant.role,
       applicantScore: bestApplicant.score || 0,
       matchedAt: new Date().toISOString()
-    });
+    };
+
+    matchesHistory.push(matchRecord);
+
+    await appendToGoogleSheet("Matches", [
+      new Date().toLocaleString(),
+      matchRecord.clientName,
+      matchRecord.clientEmail,
+      matchRecord.role,
+      matchRecord.applicantName,
+      matchRecord.applicantEmail,
+      matchRecord.applicantRole,
+      matchRecord.applicantScore
+    ]);
 
     notificationsSent++;
   }
@@ -650,7 +771,7 @@ Remote Staff Agency`;
       client.lastEmailAt = new Date().toISOString();
       client.status = client.followUpStage === 1 ? "Contacted" : `${type} Sent`;
 
-      emails.push({
+      const emailRecord = {
         id: Date.now() + Math.random(),
         type,
         clientName: client.name,
@@ -658,7 +779,18 @@ Remote Staff Agency`;
         subject,
         text,
         sentAt: new Date().toISOString()
-      });
+      };
+
+      emails.push(emailRecord);
+
+      await appendToGoogleSheet("Emails", [
+        new Date().toLocaleString(),
+        emailRecord.type,
+        emailRecord.clientName,
+        emailRecord.to,
+        emailRecord.subject,
+        emailRecord.text
+      ]);
 
       sent++;
     }
@@ -727,7 +859,7 @@ Remote Staff Agency`;
       client.lastEmailAt = new Date().toISOString();
       client.status = `${type} Sent`;
 
-      emails.push({
+      const emailRecord = {
         id: Date.now() + Math.random(),
         type,
         clientName: client.name,
@@ -735,7 +867,18 @@ Remote Staff Agency`;
         subject,
         text,
         sentAt: new Date().toISOString()
-      });
+      };
+
+      emails.push(emailRecord);
+
+      await appendToGoogleSheet("Emails", [
+        new Date().toLocaleString(),
+        emailRecord.type,
+        emailRecord.clientName,
+        emailRecord.to,
+        emailRecord.subject,
+        emailRecord.text
+      ]);
 
       sent++;
     }
