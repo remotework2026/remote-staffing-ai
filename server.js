@@ -74,7 +74,7 @@ async function appendToGoogleSheet(tabName, values) {
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: `${tabName}!A:Z`,
+      range: `'${tabName}'!A:Z`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [values],
