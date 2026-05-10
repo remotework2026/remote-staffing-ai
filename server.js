@@ -92,6 +92,35 @@ async function appendToGoogleSheet(tabName, values) {
   }
 }
 
+async function readSheetRows(tabName) {
+  if (!sheets || !SHEET_ID) return [];
+
+  try {
+    await ensureSheetTab(tabName);
+
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${tabName}!A:Z`,
+    });
+
+    const rows = result.data.values || [];
+    if (rows.length < 2) return [];
+
+    const headers = rows[0].map(h => String(h || "").trim());
+
+    return rows.slice(1).map(row => {
+      const item = {};
+      headers.forEach((header, index) => {
+        item[header] = row[index] || "";
+      });
+      return item;
+    });
+  } catch (err) {
+    console.log(`Google Sheets read error for ${tabName}:`, err.response?.data || err.message);
+    return [];
+  }
+}
+
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -120,6 +149,7 @@ function normalizeRole(role) {
     .replace(/admin assistant/g, "admin")
     .replace(/social media manager/g, "social media")
     .replace(/appointment setter/g, "appointment")
+    .replace(/e-commerce/g, "ecommerce")
     .replace(/[^a-z0-9 ]/g, "")
     .trim();
 }
@@ -160,6 +190,10 @@ function requireAuth(req, res, next) {
   if (!isAuthed(req)) return res.redirect("/login");
   next();
 }
+
+/* =====================
+   BASIC PAGES
+===================== */
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "landing.html"));
@@ -216,6 +250,60 @@ app.post("/logout", (req, res) => {
 app.get("/index.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+
+/* =====================
+   PUBLIC CONTENT FROM GOOGLE SHEETS
+===================== */
+
+app.get('/public-content', async (req, res) => {
+  let articles = await readSheetRows("Articles");
+  let jobs = await readSheetRows("VA Jobs");
+  let media = await readSheetRows("Media");
+
+  articles = articles.filter(a => String(a.status || "").toLowerCase() === "active");
+  jobs = jobs.filter(j => String(j.status || "").toLowerCase() === "active");
+  media = media.filter(m => String(m.status || "").toLowerCase() === "active");
+
+  if (articles.length === 0) {
+    articles = [
+      {
+        title: "Why Hiring a Virtual Assistant Helps Your Business Grow",
+        category: "Business Growth",
+        content: "Hiring a Virtual Assistant helps business owners save time, reduce costs, improve customer support, manage admin tasks, and focus on growth. VAs can support email management, data entry, ecommerce operations, appointment setting, social media tasks, and daily business coordination.",
+        imageUrl: "",
+        videoUrl: "",
+        status: "Active"
+      }
+    ];
+  }
+
+  if (jobs.length === 0) {
+    jobs = [
+      {
+        jobTitle: "Virtual Assistant",
+        jobType: "Remote",
+        experience: "Beginner to experienced",
+        salaryRange: "Depends on client and skill level",
+        description: "Assist businesses with admin tasks, research, email support, calendar management, and daily operations.",
+        status: "Active"
+      },
+      {
+        jobTitle: "Customer Support VA",
+        jobType: "Remote",
+        experience: "With customer service background preferred",
+        salaryRange: "Depends on client and skill level",
+        description: "Handle customer messages, order updates, chat support, and email support.",
+        status: "Active"
+      }
+    ];
+  }
+
+  res.json({ articles, jobs, media });
+});
+
+/* =====================
+   LANDING PAGE FORMS
+===================== */
 
 app.post('/submit-client-form', async (req, res) => {
   const { name, company, email, phone, role, message } = req.body;
@@ -291,6 +379,10 @@ app.post('/submit-applicant-form', async (req, res) => {
 
   res.json({ message: "Applicant form saved" });
 });
+
+/* =====================
+   PROTECTED DASHBOARD API
+===================== */
 
 app.get('/clients', requireAuth, (req, res) => res.json(readJSON(CLIENTS_FILE)));
 app.get('/applicants', requireAuth, (req, res) => res.json(readJSON(APPLICANTS_FILE)));
