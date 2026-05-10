@@ -3,372 +3,282 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Remote Staff Agency</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
-body{background:#020617;color:white;overflow-x:hidden}
-header{display:flex;justify-content:space-between;align-items:center;padding:25px 8%;background:#020617;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:999}
-.logo{font-size:30px;font-weight:bold;color:#38bdf8}
-nav a{color:white;text-decoration:none;margin-left:22px}
-.hero{min-height:85vh;display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center;padding:80px 8%}
-.hero h1{font-size:64px;line-height:1.05;margin-bottom:25px}
-.hero span{color:#38bdf8}
-.hero p{font-size:21px;color:#cbd5e1;line-height:1.7}
-.btn{display:inline-block;margin-top:25px;margin-right:10px;padding:15px 28px;background:#38bdf8;color:#020617;border-radius:12px;text-decoration:none;font-weight:bold;border:none;cursor:pointer}
-.btn.secondary{background:#22c55e}
-.card{background:#111827;border:1px solid #1e293b;border-radius:25px;padding:30px}
-.metric{background:#020617;padding:22px;border-radius:18px;margin-bottom:15px;border:1px solid #1e293b}
-.metric h3{color:#38bdf8;font-size:28px}
-section{padding:85px 8%}
-.section-title{text-align:center;margin-bottom:50px}
-.section-title h2{font-size:42px;margin-bottom:15px}
-.section-title p{color:#94a3b8;max-width:820px;margin:auto;line-height:1.7}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:25px}
-.info-card{background:#111827;border:1px solid #1e293b;border-radius:22px;padding:30px;line-height:1.7}
-.info-card h3{color:#38bdf8;margin-bottom:15px}
-.info-card p{color:#cbd5e1}
-.media-card img{width:100%;height:230px;object-fit:cover;border-radius:15px;margin-bottom:15px;background:#020617}
-.video-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:15px;margin-bottom:15px;background:#020617}
-.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
-.badge{display:inline-block;background:#1e293b;color:#93c5fd;padding:6px 10px;border-radius:999px;font-size:13px;margin-bottom:12px}
-.form-section{display:none;background:#0f172a;border-top:1px solid #1e293b}
-form{max-width:650px;margin:auto;background:#111827;padding:35px;border-radius:24px;border:1px solid #1e293b}
-input,textarea,select{width:100%;padding:14px;margin:10px 0;border-radius:10px;border:1px solid #334155;background:#020617;color:white}
-textarea{height:120px}
-form button{background:#38bdf8;color:#020617;border:none;padding:15px 25px;border-radius:10px;font-weight:bold;cursor:pointer}
-.popup{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999}
-.popup-box{background:#0f172a;border:1px solid #38bdf8;border-radius:25px;padding:40px;max-width:650px;width:90%;text-align:center}
-.popup-box h2{color:#38bdf8;font-size:34px;margin-bottom:15px}
-.popup-box p{color:#cbd5e1;margin-bottom:25px;line-height:1.7}
-.popup button{padding:15px 22px;margin:8px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
-.client-btn{background:#38bdf8;color:#020617}
-.applicant-btn{background:#22c55e;color:#020617}
-.close-btn{background:#334155;color:white}
-.cta{margin:40px 8%;background:linear-gradient(135deg,#0ea5e9,#2563eb);border-radius:30px;padding:70px 40px;text-align:center}
-.cta h2{font-size:40px}
-footer{text-align:center;padding:35px;color:#94a3b8;border-top:1px solid #1e293b}
-@media(max-width:900px){.hero{grid-template-columns:1fr}.hero h1{font-size:42px}nav{display:none}}
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+header{
+  background:#111827;
+  padding:20px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.logo-wrap img{
+  width:70px;
+  height:70px;
+  object-fit:contain;
+}
+
+.logo-title{
+  font-size:28px;
+  font-weight:bold;
+  color:#38bdf8;
+}
+
+.hero{
+  padding:80px 20px;
+  text-align:center;
+  background:linear-gradient(to right,#0f172a,#1e293b);
+}
+
+.hero h1{
+  font-size:50px;
+  margin-bottom:20px;
+}
+
+.hero p{
+  max-width:800px;
+  margin:auto;
+  font-size:20px;
+  color:#cbd5e1;
+}
+
+.section{
+  padding:50px 20px;
+}
+
+.section h2{
+  text-align:center;
+  margin-bottom:40px;
+  color:#38bdf8;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:#1e293b;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 0 10px rgba(0,0,0,0.4);
+}
+
+.card img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+}
+
+.card-content{
+  padding:20px;
+}
+
+.card-content h3{
+  margin-top:0;
+  color:#38bdf8;
+}
+
+iframe{
+  width:100%;
+  height:220px;
+  border:none;
+}
+
+.job{
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+}
+
+footer{
+  text-align:center;
+  padding:30px;
+  background:#111827;
+  color:#94a3b8;
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="visitorPopup" class="popup">
-  <div class="popup-box">
-    <h2>Welcome to Remote Staff Agency</h2>
-    <p>Are you a business looking to hire Virtual Assistants, or an applicant looking for remote VA work?</p>
-    <button class="client-btn" onclick="showClientForm()">I’m a Client Looking for VA Workers</button>
-    <button class="applicant-btn" onclick="showApplicantForm()">I’m an Applicant Looking for VA Job</button>
-    <br>
-    <button class="close-btn" onclick="closePopup()">Just Browsing</button>
-  </div>
-</div>
-
 <header>
-  <div class="logo">Remote Staff Agency</div>
-  <nav>
-    <a href="/">Home</a>
-    <a href="#articles">Articles</a>
-    <a href="#jobs">VA Jobs</a>
-    <a href="#media">Media</a>
-    <a href="#forms">Apply / Hire</a>
-    <a href="/login">Dashboard</a>
-  </nav>
+  <div class="logo-wrap">
+    <img src="/logo.png" alt="Logo">
+    <div class="logo-title">Remote Staff Agency</div>
+  </div>
 </header>
 
 <section class="hero">
-  <div>
-    <h1>Hire Reliable <span>Virtual Assistants</span> and Remote Staff</h1>
-    <p>
-      We help businesses save time, reduce hiring costs, and scale operations by connecting them with trained remote workers for admin, customer support, appointment setting, ecommerce support, social media, and daily business tasks.
-    </p>
-    <button class="btn" onclick="showClientForm()">Hire Remote Staff</button>
-    <button class="btn secondary" onclick="showApplicantForm()">Apply for VA Job</button>
-  </div>
+  <h1>Hire Skilled Filipino Virtual Assistants</h1>
 
-  <div class="card">
-    <div class="metric">
-      <h3>Lower Cost</h3>
-      <p>Build your team without expensive local hiring.</p>
-    </div>
-    <div class="metric">
-      <h3>Remote Talent</h3>
-      <p>Access skilled workers ready to support your business.</p>
-    </div>
-    <div class="metric">
-      <h3>Fast Hiring</h3>
-      <p>Save time by letting us handle sourcing and matching.</p>
-    </div>
-    <div class="metric">
-      <h3>Flexible Support</h3>
-      <p>Hire part-time, full-time, or project-based support.</p>
-    </div>
-  </div>
+  <p>
+    Remote Staff Agency connects businesses worldwide with reliable,
+    professional, and affordable Filipino Virtual Assistants for
+    ecommerce, customer support, admin work, social media,
+    appointment setting, and remote operations.
+  </p>
 </section>
 
-<section id="articles">
-  <div class="section-title">
-    <h2>Articles About Hiring Virtual Assistants</h2>
-    <p>Helpful information for business owners who want to understand the advantages of hiring remote staff.</p>
-  </div>
-  <div id="articlesGrid" class="grid"></div>
+<section class="section">
+  <h2>Latest Articles</h2>
+
+  <div id="articles" class="grid"></div>
 </section>
 
-<section id="jobs">
-  <div class="section-title">
-    <h2>VA Job Opportunities</h2>
-    <p>Remote job opportunities for applicants looking to work as Virtual Assistants, support agents, ecommerce assistants, appointment setters, and more.</p>
-  </div>
-  <div id="jobsGrid" class="grid"></div>
+<section class="section">
+  <h2>VA Job Opportunities</h2>
+
+  <div id="jobs" class="grid"></div>
 </section>
 
-<section id="media">
-  <div class="section-title">
-    <h2>Images and Videos</h2>
-    <p>Useful videos, images, and short explanations about VA hiring, remote work, and staffing support.</p>
-  </div>
-  <div id="mediaGrid" class="grid"></div>
+<section class="section">
+  <h2>Media & Videos</h2>
+
+  <div id="media" class="grid"></div>
 </section>
-
-<section id="services">
-  <div class="section-title">
-    <h2>What We Do</h2>
-    <p>We help businesses find, screen, and connect with remote staff who can support daily operations and growth.</p>
-  </div>
-
-  <div class="grid">
-    <div class="info-card">
-      <h3>Virtual Assistants</h3>
-      <p>Admin support, inbox management, calendar management, research, reporting, and daily task coordination.</p>
-    </div>
-    <div class="info-card">
-      <h3>Customer Support</h3>
-      <p>Remote agents for email support, chat support, order updates, customer follow-ups, and service assistance.</p>
-    </div>
-    <div class="info-card">
-      <h3>Appointment Setters</h3>
-      <p>Support for lead follow-ups, scheduling calls, qualifying prospects, and managing booking calendars.</p>
-    </div>
-    <div class="info-card">
-      <h3>Ecommerce Support</h3>
-      <p>Help with order processing, product listing, CRM updates, customer inquiries, and store admin work.</p>
-    </div>
-  </div>
-</section>
-
-<section id="forms" class="form-section">
-  <div class="section-title">
-    <h2 id="formTitle">Form</h2>
-    <p>Please fill out the form below.</p>
-  </div>
-
-  <form id="clientForm">
-    <input id="client_name" placeholder="Your Name" required>
-    <input id="client_company" placeholder="Company Name" required>
-    <input id="client_email" placeholder="Email Address" required>
-    <input id="client_phone" placeholder="Phone / WhatsApp">
-    <input id="client_role" placeholder="What role do you need?">
-    <textarea id="client_message" placeholder="Tell us what help your business needs"></textarea>
-    <button type="button" onclick="submitClientForm()">Submit Client Details</button>
-  </form>
-
-  <form id="applicantForm" style="display:none;">
-    <input id="applicant_name" placeholder="Full Name" required>
-    <input id="applicant_email" placeholder="Email Address" required>
-    <input id="applicant_phone" placeholder="Phone / WhatsApp">
-    <input id="applicant_role" placeholder="Position wanted">
-    <textarea id="applicant_experience" placeholder="Tell us about your experience"></textarea>
-
-    <select id="applicant_internet">
-      <option value="">Internet Quality</option>
-      <option value="Good">Good</option>
-      <option value="Average">Average</option>
-      <option value="Poor">Poor</option>
-    </select>
-
-    <select id="applicant_english">
-      <option value="">English Level</option>
-      <option value="Good">Good</option>
-      <option value="Average">Average</option>
-      <option value="Beginner">Beginner</option>
-    </select>
-
-    <button type="button" onclick="submitApplicantForm()">Submit Applicant Details</button>
-  </form>
-</section>
-
-<div class="cta">
-  <h2>Build Your Remote Team Faster</h2>
-  <p>Whether you need a VA or want to work remotely, Remote Staff Agency helps organize the process from first contact to matching.</p>
-</div>
 
 <footer>
-  © 2026 Remote Staff Agency
+  © 2026 Remote Staff Agency | Filipino VA Workers
 </footer>
 
 <script>
-const API = "";
 
-function closePopup(){
-  document.getElementById("visitorPopup").style.display = "none";
+async function loadArticles(){
+
+  const res = await fetch("/api/articles");
+  const data = await res.json();
+
+  const container = document.getElementById("articles");
+
+  container.innerHTML = data.map(article => `
+
+    <div class="card">
+
+      <img src="${article.imageUrl}" />
+
+      <div class="card-content">
+        <h3>${article.title}</h3>
+        <p>${article.content}</p>
+      </div>
+
+    </div>
+
+  `).join("");
 }
 
-function showClientForm(){
-  closePopup();
-  document.getElementById("forms").style.display = "block";
-  document.getElementById("clientForm").style.display = "block";
-  document.getElementById("applicantForm").style.display = "none";
-  document.getElementById("formTitle").innerText = "Client Hiring Form";
-  document.getElementById("forms").scrollIntoView({behavior:"smooth"});
+async function loadJobs(){
+
+  const res = await fetch("/api/jobs");
+  const data = await res.json();
+
+  const container = document.getElementById("jobs");
+
+  container.innerHTML = data.map(job => `
+
+    <div class="job">
+
+      <h3>${job.jobTitle}</h3>
+
+      <p><strong>Type:</strong> ${job.jobType}</p>
+
+      <p><strong>Experience:</strong> ${job.experience}</p>
+
+      <p><strong>Salary:</strong> ${job.salaryRange}</p>
+
+      <p>${job.description}</p>
+
+    </div>
+
+  `).join("");
 }
 
-function showApplicantForm(){
-  closePopup();
-  document.getElementById("forms").style.display = "block";
-  document.getElementById("clientForm").style.display = "none";
-  document.getElementById("applicantForm").style.display = "block";
-  document.getElementById("formTitle").innerText = "Applicant VA Job Form";
-  document.getElementById("forms").scrollIntoView({behavior:"smooth"});
-}
+function convertYoutube(url){
 
-function submitClientForm(){
-  fetch(API + "/submit-client-form", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      name:document.getElementById("client_name").value,
-      company:document.getElementById("client_company").value,
-      email:document.getElementById("client_email").value,
-      phone:document.getElementById("client_phone").value,
-      role:document.getElementById("client_role").value,
-      message:document.getElementById("client_message").value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    alert(data.message);
-    document.getElementById("clientForm").reset();
-  });
-}
-
-function submitApplicantForm(){
-  fetch(API + "/submit-applicant-form", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      name:document.getElementById("applicant_name").value,
-      email:document.getElementById("applicant_email").value,
-      phone:document.getElementById("applicant_phone").value,
-      role:document.getElementById("applicant_role").value,
-      experience:document.getElementById("applicant_experience").value,
-      internet:document.getElementById("applicant_internet").value,
-      english:document.getElementById("applicant_english").value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    alert(data.message);
-    document.getElementById("applicantForm").reset();
-  });
-}
-
-function youtubeEmbed(url){
-  if(!url) return "";
-
-  let videoId = "";
-
-  if(url.includes("youtube.com/watch?v=")){
-    videoId = url.split("v=")[1].split("&")[0];
-  } else if(url.includes("youtu.be/")){
-    videoId = url.split("youtu.be/")[1].split("?")[0];
-  } else if(url.includes("youtube.com/embed/")){
-    videoId = url.split("embed/")[1].split("?")[0];
+  if(url.includes("watch?v=")){
+    return url.replace("watch?v=","embed/");
   }
 
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+  return url;
 }
 
-function loadPublicContent(){
-  fetch(API + "/public-content")
-  .then(res=>res.json())
-  .then(data=>{
-    renderArticles(data.articles || []);
-    renderJobs(data.jobs || []);
-    renderMedia(data.media || []);
-  })
-  .catch(err=>{
-    console.log("Content load error", err);
-  });
-}
+async function loadMedia(){
 
-function renderArticles(articles){
-  const grid = document.getElementById("articlesGrid");
-  grid.innerHTML = "";
+  const res = await fetch("/api/media");
+  const data = await res.json();
 
-  articles.forEach(a=>{
-    grid.innerHTML += `
-      <div class="info-card">
-        ${a.imageUrl ? `<img src="${a.imageUrl}" style="width:100%;height:220px;object-fit:cover;border-radius:15px;margin-bottom:15px;">` : ""}
-        <span class="badge">${a.category || "Article"}</span>
-        <h3>${a.title || "Untitled Article"}</h3>
-        <p>${a.content || ""}</p>
-        ${a.videoUrl ? `<br><a class="btn" href="${a.videoUrl}" target="_blank">Watch Video</a>` : ""}
+  const container = document.getElementById("media");
+
+  container.innerHTML = data.map(item => {
+
+    if(item.type === "youtube"){
+
+      return `
+
+      <div class="card">
+
+        <iframe
+          src="${convertYoutube(item.url)}"
+          allowfullscreen>
+        </iframe>
+
+        <div class="card-content">
+          <h3>${item.title}</h3>
+          <p>${item.description}</p>
+        </div>
+
       </div>
-    `;
-  });
-}
 
-function renderJobs(jobs){
-  const grid = document.getElementById("jobsGrid");
-  grid.innerHTML = "";
+      `;
+    }
 
-  jobs.forEach(j=>{
-    grid.innerHTML += `
-      <div class="info-card">
-        <span class="badge">${j.jobType || "Remote"}</span>
-        <h3>${j.jobTitle || "VA Job"}</h3>
-        <p><b>Experience:</b> ${j.experience || "Open"}</p>
-        <p><b>Salary:</b> ${j.salaryRange || "Depends on client"}</p>
-        <p>${j.description || ""}</p>
-        <button class="btn" onclick="showApplicantForm()">Apply Now</button>
+    return `
+
+    <div class="card">
+
+      <img src="${item.url}" />
+
+      <div class="card-content">
+        <h3>${item.title}</h3>
+        <p>${item.description}</p>
       </div>
+
+    </div>
+
     `;
-  });
+
+  }).join("");
 }
 
-function renderMedia(media){
-  const grid = document.getElementById("mediaGrid");
-  grid.innerHTML = "";
+loadArticles();
+loadJobs();
+loadMedia();
 
-  media.forEach(m=>{
-    const type = String(m.type || "").toLowerCase();
-    const embed = youtubeEmbed(m.url);
+setInterval(() => {
+  loadArticles();
+  loadJobs();
+  loadMedia();
+}, 60000);
 
-    grid.innerHTML += `
-      <div class="info-card media-card">
-        <span class="badge">${m.type || "Media"}</span>
-        ${
-          type === "image"
-          ? `<img src="${m.url}" alt="${m.title || "Media"}">`
-          : ""
-        }
-        ${
-          type === "youtube" && embed
-          ? `<div class="video-wrap"><iframe src="${embed}" allowfullscreen></iframe></div>`
-          : ""
-        }
-        <h3>${m.title || "Media"}</h3>
-        <p>${m.description || ""}</p>
-      </div>
-    `;
-  });
-}
-
-loadPublicContent();
-
-// Refresh content every 60 seconds
-setInterval(loadPublicContent, 60000);
 </script>
 
 </body>
