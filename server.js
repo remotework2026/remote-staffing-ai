@@ -16,7 +16,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve logo.png, landing.html, index.html, and other static files
-app.use(express.static(__dirname));
+app.get("/logo.png", (req, res) => {
+  res.sendFile(path.join(__dirname, "logo.png"));
+});
 
 /* =====================
    SENDGRID
